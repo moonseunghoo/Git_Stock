@@ -14,3 +14,4 @@ financial_stmt.index.rename('주요재무정보', inplace=True)
 
 financial_stmt.columns = financial_stmt.columns.droplevel(2)
 print(financial_stmt)
+financial_stmt.to_excel('Financial statements.xlsx')
