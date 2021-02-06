@@ -162,7 +162,8 @@ def basics_Info(code):
     html0 = browser.page_source  # 지금 현 상태의 page source불러오기
     html1 = BeautifulSoup(html0, 'html.parser')
 
-    htmlEIS = html1.find('td',{'class':'cmp-table-cell td0101'}) #거래소,산업군,섹터
+    # 거래소,산업군,섹터
+    htmlEIS = html1.find('td',{'class':'cmp-table-cell td0101'})
 
     dlEI = htmlEIS.find('dl')
     dtEI = dlEI.find_all('dt',{'class':'line-left'})[1]
@@ -176,13 +177,13 @@ def basics_Info(code):
     dtS = dtS[29:-5]
     Sector =  dtS #섹터
 
-    #평균거래량,시가 총액
-    htmlAM = html1.find('table',{'class':'gHead','summary':'기업의 기본적인 시세정보'
+    # 평균거래량,시가 총액,가격
+    htmlAMP = html1.find('table',{'class':'gHead','summary':'기업의 기본적인 시세정보'
                 '(주가/전일대비/수익률,52주최고/최저,액면가,거래량/거래대금,시가총액,유동주식비율,'
                             '외국인지분율,52주베타,수익률(1M/3M/6M/1Y))를 제공합니다.'})
 
     # 시가총액
-    tbodyAM = htmlAM.find('tbody')
+    tbodyAM = htmlAMP.find('tbody')
     trM = tbodyAM.find_all('tr')[4]
     tdM = trM.find('td')
 
@@ -192,7 +193,7 @@ def basics_Info(code):
     MarketCap = tdM1
 
     # 평균 거래량
-    tbodyAV = htmlAM.find('tbody')
+    tbodyAV = htmlAMP.find('tbody')
     trAV = tbodyAV.find_all('tr')[3]
     tdAV = trAV.find('td')
 
@@ -205,11 +206,24 @@ def basics_Info(code):
     tdAV2 = ','.join(tdAV2)
     AverageVolume = tdAV2
 
-    #투자의견
-    htmlAR = html1.find('table',{'class':'gHead all-width','summary':'투자의견에 대한 '
+    # 가격
+    tbodyPR = htmlAMP.find('tbody')
+    trPR = tbodyPR.find_all('tr')[0]
+    tdPR = trPR.find('td')
+
+    tdPR = str(tdPR)
+    tdPR = tdPR.split('/')
+    tdPR[1:] = ''
+    tdPR = str(tdPR)
+    tdPR1 = tdPR[58:-3]
+    Price = tdPR1
+
+
+    # 투자의견,목표 주가
+    htmlART = html1.find('table',{'class':'gHead all-width','summary':'투자의견에 대한 '
             '컨센서스의 위치를 그림으로 보여주고, 투자의견값,목표주가,EPS,PER,PBR,추정기관정보를 제공합니다.'})
 
-    tbodyAR = htmlAR.find('tbody')
+    tbodyAR = htmlART.find('tbody')
     trAR = tbodyAR.find_all('tr')[1]
     tdAR = trAR.find_all('td')[0]
 
@@ -218,8 +232,36 @@ def basics_Info(code):
     tdAR1 = '.'.join(tdAR1)
     AnalystRecom = tdAR1 #투자의견
 
-    return Exchange,Industry,Sector,MarketCap,AnalystRecom,AverageVolume
 
-code = '005380'
+    tbodyTP = htmlART.find('tbody')
+    trTP = tbodyTP.find_all('tr')[1]
+    tdTP = trTP.find_all('td')[1]
+
+    tdTP = str(tdTP)
+    tdTP1 = re.findall("\d+", tdTP)
+    tdTP1 = '.'.join(tdTP1)
+    TargetPrice = tdTP1  # 목표주가
+
+    # 기업공개일
+    browser.find_elements_by_xpath('//*[@class="wrapper-menu"]/dl/dt[2]')[0].click()
+    delay = 2
+    browser.implicitly_wait(delay)
+    htmlCO = browser.page_source
+    htmlCO1 = BeautifulSoup(htmlCO,'html.parser')
+
+    htmlIPO = htmlCO1.find('table', {'class': 'gHead all-width', 'summary': '기업에 대한 기본적인 정보'
+    '(본사주소,홈페이지,대표전화,설립일,대표이사,계열,종업원수,주식수(보통주/우선주),감사인,명의개서,주거래은행)을 제공합니다.'})
+    trIPO = htmlIPO.find_all('tr')[3]
+    tdIPO = trIPO.find_all('td')[0]
+
+    tdIPO = str(tdIPO)
+    tdIPO = re.findall("\d+",tdIPO)
+    tdIPO = tdIPO[-3:]
+    tdIPO = '/'.join(tdIPO)
+    IPODate = tdIPO
+
+    return Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,IPODate
+
+code = '293490'
 Exchange = basics_Info(code)
 print(Exchange)
