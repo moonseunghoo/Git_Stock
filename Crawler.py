@@ -94,7 +94,7 @@ def stock_crawler_Quarter(code):
 
     #재무제표 "분기" 클릭하기
     browser.find_elements_by_xpath('//*[@class="schtab"][1]/tbody/tr/td[4]')[0].click()
-    delay = 2
+    delay = 5
     browser.implicitly_wait(delay)
 
     html0 = browser.page_source #지금 현 상태의 page source불러오기
@@ -190,7 +190,7 @@ def Descriptive(code):
     tdM = str(tdM)
     tdM1 = re.findall("\d+",tdM)
     tdM1 = ','.join(tdM1)
-    MarketCap = tdM1
+    MarketCap = tdM1.replace(',','')
 
     # 평균 거래량
     tbodyAV = htmlAMP.find('tbody')
@@ -217,7 +217,7 @@ def Descriptive(code):
     tdPR = str(tdPR)
     tdPR1 = tdPR[58:-3]
     Price = tdPR1.replace(',','')
-
+    Price = int(Price)
 
     # 투자의견,목표 주가
     htmlART = html1.find('table',{'class':'gHead all-width','summary':'투자의견에 대한 '
@@ -244,7 +244,7 @@ def Descriptive(code):
 
     # 기업공개일
     browser.find_elements_by_xpath('//*[@class="wrapper-menu"]/dl/dt[2]')[0].click()
-    delay = 2
+    delay = 5
     browser.implicitly_wait(delay)
     htmlCO = browser.page_source
     htmlCO1 = BeautifulSoup(htmlCO,'html.parser')
@@ -272,32 +272,29 @@ def Fundamental(code,Price):
     # frame구조 안으로 들어가기
     browser.switch_to.frame(browser.find_element_by_id('coinfo_cp'))
 
-    html0 = browser.page_source  # 지금 현 상태의 page source불러오기
-    html1 = BeautifulSoup(html0, 'html.parser')
-
-    #P/E 주가수익률
     # 재무제표 "분기" 클릭하기
     browser.find_elements_by_xpath('//*[@class="schtab"][1]/tbody/tr/td[4]')[0].click()
-    delay = 3
+    delay = 5
     browser.implicitly_wait(delay)
     htmlQUT = browser.page_source
     htmlQUT1 = BeautifulSoup(htmlQUT,'html.parser')
 
+    # P/E 주가수익률
     htmlPE = htmlQUT1.find('table',{'class':'gHead01 all-width','summary':'주요재무정보를 제공합니다.'})
     tbodyPE = htmlPE.find('tbody')
     trPE = tbodyPE.find_all('tr')[25]
     tdPE = trPE.find_all('td')
 
-    EPS = []
+    EPS0 = []
     for i in range(1,5): #EPS 값 입력
-        EPS.append(tdPE[i].text)
+        EPS0.append(tdPE[i].text)
 
-    for i in range(len(EPS)): #EPS 값 ,제거
-        EPS[i] = EPS[i].replace(',','')
+    for i in range(len(EPS0)): #EPS 값 ,제거
+        EPS0[i] = EPS0[i].replace(',','')
 
-    intEPS =  list(map(int,EPS))
-    SumEPS = sum(intEPS)
-    PE = int(Price)/SumEPS
+    intEPS =  list(map(int,EPS0))
+    EPS = sum(intEPS)
+    PE = Price/EPS
     PE = round(PE,2)
 
     #Forward P/E 예상주가수익률
@@ -307,25 +304,130 @@ def Fundamental(code,Price):
     tdFPE = trFPE.find_all('td')
 
     FEPS = []
-    for i in range(4, 8):  # EPS 값 입력
+    for i in range(4, 8):  # FEPS 값 입력
         FEPS.append(tdFPE[i].text)
 
-    for i in range(len(FEPS)):  # EPS 값 ,제거
+    for i in range(len(FEPS)):  # FEPS 값 ,제거
         FEPS[i] = FEPS[i].replace(',', '')
+
+    for i in range(len(FEPS)):  # FEPS 공백 제거
+        if FEPS[i] == '':
+            FEPS[i] = '0'
 
     intFEPS = list(map(int, FEPS))
     SumFEPS = sum(intFEPS)
-    print(SumFEPS)
-    print(Price)
     FPE = int(Price) / SumFEPS
     FPE = round(FPE, 2)
 
-    return PE,FPE
+    #EPS growth this year 올해 EPS성장률
+    htmlEPSG = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyEPSG = htmlEPSG.find('tbody')
+    trEPSG = tbodyEPSG.find_all('tr')[25]
+    tdEPSG = trEPSG.find_all('td')
+
+    EPSG = []
+    EPSG.append(tdEPSG[0].text) #EPS 값 입력
+    EPSG.append(tdEPSG[4].text) #EPS 값 입력
+
+    for i in range(len(EPSG)):  # EPS 값 ,제거
+        EPSG[i] = EPSG[i].replace(',', '')
+
+    # intEPSG = list(map(int, EPSG))
+    # subEPSG = intEPSG[1]-intEPSG[0]
+    # divEPSG = subEPSG / intEPSG[0]
+    # EPSGrowth = divEPSG * 100
+    # EPSGrowth = round(EPSGrowth,2)
+
+    intEPSG = list(map(int, EPSG))
+    divEPSG = intEPSG[1] / intEPSG[0]
+    divEPSG = divEPSG -1
+    EPSGrowth = divEPSG * 100
+    EPSGrowth = round(EPSGrowth, 2)
+
+    #PEG 주가이익성장률
+    PEG = PE / EPSGrowth
+    PEG = round(PEG,2)
+
+    #P/S 주가매출액비율
+    htmlPS = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyPS = htmlPS.find('tbody')
+    trPS = tbodyPS.find_all('tr')[0]
+    tdPS = trPS.find_all('td')
+
+    Sale = []
+    for i in range(1, 5):  # EPS 값 입력
+        Sale.append(tdPS[i].text)
+
+    for i in range(len(Sale)):  # EPS 값 ,제거
+        Sale[i] = Sale[i].replace(',', '')
+
+    intSale = list(map(int, Sale))
+    Sales = sum(intSale)
+
+    PS = int(MarketCap) / Sales
+    PS = round(PS,2)
+
+    #P/B 주가순자산비율
+    htmlBP = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyBP = htmlBP.find('tbody')
+    trBP = tbodyBP.find_all('tr')[27]
+    tdBP = trBP.find_all('td')
+
+    BPS0 = 0
+    BPS0 = tdBP[4].text  # 값 입력
+    BPS0 = BPS0.replace(',','')
+    BP = int(BPS0)
+
+    PB = Price / BP #PBR
+    PB = round(PB,2)
+
+    #P/C 주가현금흐름비율
+    browser.find_elements_by_xpath('//*[@class="wrapper-menu"]/dl/dt[4]')[0].click()
+    delay = 5
+    browser.implicitly_wait(delay)
+    browser.find_element_by_xpath('//*[@id="frqTyp1_2"]').click()
+    browser.implicitly_wait(delay)
+    browser.find_element_by_xpath('//*[@id="hfinGubun2"]').click()
+    browser.implicitly_wait(delay)
+
+    htmlII = browser.page_source
+    htmlII0 = BeautifulSoup(htmlII, 'html.parser')
+
+    htmlCPS = htmlII0.find('table',{'class':'gHead01 all-width data-list',
+                                    'summary':'IFRS연결 분기 투자분석 정보를 제공합니다.'})
+
+    tbodyCPS = htmlCPS.find('tbody')
+    trCPS = tbodyCPS.find_all('tr')[8]
+    tdCPS = trCPS.find_all('td')
+
+    CPS0 = []
+    for i in range(2,6):
+        CPS0.append(tdCPS[i].text)
+
+    print(CPS0)
+
+    for i in range(len(CPS0)): #값 ,제거
+        CPS0[i] = CPS0[i].replace(',','')
+
+    intCPS =  list(map(int,CPS0))
+    CPS = sum(intCPS) #CPS
+
+    PC = Price / CPS
+    PC = round(PC,2)
+
+
+    return PE, FPE, EPSGrowth, PEG, PS, PB, CPS, PC
 
 
 code = '005380'
 Exchange, Industry, Sector, MarketCap, \
 AnalystRecom, TargetPrice, AverageVolume, Price, IPODate = Descriptive(code)
 
-Fundamental = Fundamental(code,Price)
-print(Fundamental)
+PE, FPE, EPSGrowth, PEG, PS, PB, CPS, PC = Fundamental(code,Price)
+# print('PE ratio : ',PE)
+# print('Forward PE ratio : ',FPE)
+# print('EPS Growth ratio : ',EPSGrowth)
+# print('PEG Growth ratio : ',PEG)
+# print('PS ratio : ',PS)
+# print('PB ratio : ',PB)
+# print('PC ratio : ',PC)
