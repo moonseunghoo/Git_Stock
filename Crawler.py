@@ -1,3 +1,5 @@
+import math
+
 import requests # 웹 페이지 소스를 얻기 위한 패키지(기본 내장 패키지이다.)
 import pandas as pd # 데이터를 처리하기 위한 가장 기본적인 패키지
 import time # 사이트를 불러올 때, 작업 지연시간을 지정해주기 위한 패키지이다. (사이트가 늦게 켜지면 에러가 발생하기 때문)
@@ -28,73 +30,6 @@ def stock_crawler_Annual(code):
     #재무제표 "연간" 클릭하기
     browser.find_elements_by_xpath('//*[@class="schtab"][1]/tbody/tr/td[3]')[0].click()
     delay = 2
-    browser.implicitly_wait(delay)
-
-    html0 = browser.page_source #지금 현 상태의 page source불러오기
-    html1 = BeautifulSoup(html0,'html.parser')
-
-    #기업 title불러오기
-    title0 = html1.find('head').find('title').text
-    title0.split('-')[-1]
-
-    #재무제표 영역 불러오기
-    html22 = html1.find('table',{'class':'gHead01 all-width','summary':'주요재무정보를 제공합니다.'})
-
-    #재무제표 영역에서 날짜 불러오기
-    thead0 = html22.find('thead')
-    tr0 = thead0.find_all('tr')[1]
-    th0 = tr0.find_all('th')
-
-    #날자부분만 따로 저장
-    date=[]
-    for i in range(len(th0)):
-        date.append(''.join(re.findall('[0-9/]',th0[i].text)))
-
-    #재무제표 영역에서 columns 및 본문 데이터 수집
-    tbody0 = html22.find('tbody') #tbody에 column으로 사용할 데이터와 본문 데이터가 모두 담겨져 있다.
-    tr0 = tbody0.find_all('tr')
-
-    #columns 수집
-    col = []
-    for i in range(len(tr0)):
-        if '\xa0' in tr0[i].find('th').text:
-            tx = re.sub('\xa0','',tr0[i].find('th').text)
-        else:
-            tx = tr0[i].find('th').text
-
-        col.append(tx)
-
-    #본문데아터 수집
-    td = []
-    for i in range(len(tr0)):
-        td0 = tr0[i].find_all('td')
-        td1 = []
-        for j in range(len(td0)):
-            if td0[j].text == '':
-                td1.append('0')
-            else:
-                td1.append(td0[j].text)
-
-        td.append(td1)
-
-
-
-    return pd.DataFrame(td,columns=date,index=col)
-
-#분기별 재무제표
-def stock_crawler_Quarter(code):
-    # code = 종목번호
-    name = code
-    base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
-
-    browser.get(base_url)
-
-    #frame구조 안으로 들어가기
-    browser.switch_to.frame(browser.find_element_by_id('coinfo_cp'))
-
-    #재무제표 "분기" 클릭하기
-    browser.find_elements_by_xpath('//*[@class="schtab"][1]/tbody/tr/td[4]')[0].click()
-    delay = 5
     browser.implicitly_wait(delay)
 
     html0 = browser.page_source #지금 현 상태의 page source불러오기
@@ -292,6 +227,10 @@ def Fundamental(code,Price):
     for i in range(len(EPS0)): #EPS 값 ,제거
         EPS0[i] = EPS0[i].replace(',','')
 
+    for i in range(len(EPS0)):  # 공백 제거
+        if EPS0[i] == '':
+            EPS0[i] = '0'
+
     intEPS =  list(map(int,EPS0))
     EPS = sum(intEPS)
     PE = Price/EPS
@@ -320,33 +259,43 @@ def Fundamental(code,Price):
     FPE = round(FPE, 2)
 
     #EPS growth this year 올해 EPS성장률
-    htmlEPSG = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
-    tbodyEPSG = htmlEPSG.find('tbody')
-    trEPSG = tbodyEPSG.find_all('tr')[25]
-    tdEPSG = trEPSG.find_all('td')
+    htmlEPSGT = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyEPSGT = htmlEPSGT.find('tbody')
+    trEPSGT = tbodyEPSGT.find_all('tr')[25]
+    tdEPSGT = trEPSGT.find_all('td')
 
-    EPSG = []
-    EPSG.append(tdEPSG[0].text) #EPS 값 입력
-    EPSG.append(tdEPSG[4].text) #EPS 값 입력
+    EPSGT = []
+    EPSGT.append(tdEPSGT[0].text) #EPS 값 입력
+    EPSGT.append(tdEPSGT[4].text) #EPS 값 입력
 
-    for i in range(len(EPSG)):  # EPS 값 ,제거
-        EPSG[i] = EPSG[i].replace(',', '')
+    for i in range(len(EPSGT)):  # EPS 값 ,제거
+        EPSGT[i] = EPSGT[i].replace(',', '')
+
+    for i in range(len(EPSGT)):  # 공백 제거
+        if EPSGT[i] == '':
+            EPSGT[i] = '0'
 
     # intEPSG = list(map(int, EPSG))
     # subEPSG = intEPSG[1]-intEPSG[0]
     # divEPSG = subEPSG / intEPSG[0]
     # EPSGrowth = divEPSG * 100
     # EPSGrowth = round(EPSGrowth,2)
+    intEPSGT = list(map(int, EPSGT))
 
-    intEPSG = list(map(int, EPSG))
-    divEPSG = intEPSG[1] / intEPSG[0]
-    divEPSG = divEPSG -1
-    EPSGrowth = divEPSG * 100
-    EPSGrowth = round(EPSGrowth, 2)
+    if intEPSGT[0] != 0:
+        divEPSGT = intEPSGT[1] / intEPSGT[0]
+        divEPSGT = divEPSGT -1
+        EPSGrowthT = divEPSGT * 100
+        EPSGrowthT = round(EPSGrowthT, 2)
+    else:
+        EPSGrowthT = 0
 
     #PEG 주가이익성장률
-    PEG = PE / EPSGrowth
-    PEG = round(PEG,2)
+    if EPSGrowthT != 0:
+        PEG = PE / EPSGrowthT
+        PEG = round(PEG,2)
+    else:
+        PEG = 0
 
     #P/S 주가매출액비율
     htmlPS = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
@@ -360,6 +309,10 @@ def Fundamental(code,Price):
 
     for i in range(len(Sale)):  # EPS 값 ,제거
         Sale[i] = Sale[i].replace(',', '')
+
+    for i in range(len(Sale)):  # 공백 제거
+        if Sale[i] == '':
+            Sale[i] = '0'
 
     intSale = list(map(int, Sale))
     Sales = sum(intSale)
@@ -380,6 +333,29 @@ def Fundamental(code,Price):
 
     PB = Price / BP #PBR
     PB = round(PB,2)
+
+    # P/FC 자유현금흐름비율
+    htmlFCF = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyFCF = htmlFCF.find('tbody')
+    trFCF = tbodyFCF.find_all('tr')[25]
+    tdFCF = trFCF.find_all('td')
+
+    FCF0 = []
+    for i in range(1, 5):  # EPS 값 입력
+        FCF0.append(tdFCF[i].text)
+
+    for i in range(len(FCF0)):  # EPS 값 ,제거
+        FCF0[i] = FCF0[i].replace(',', '')
+
+    for i in range(len(FCF0)):  # 공백 제거
+        if FCF0[i] == '':
+            FCF0[i] = '0'
+
+    intFCF = list(map(int, FCF0))
+    FCF = sum(intFCF)
+
+    PFC = Price / FCF
+    PFC = round(PFC, 2)
 
     #P/C 주가현금흐름비율
     browser.find_elements_by_xpath('//*[@class="wrapper-menu"]/dl/dt[4]')[0].click()
@@ -404,10 +380,12 @@ def Fundamental(code,Price):
     for i in range(2,6):
         CPS0.append(tdCPS[i].text)
 
-    print(CPS0)
-
     for i in range(len(CPS0)): #값 ,제거
         CPS0[i] = CPS0[i].replace(',','')
+
+    for i in range(len(CPS0)):  # 공백 제거
+        if CPS0[i] == '':
+            CPS0[i] = '0'
 
     intCPS =  list(map(int,CPS0))
     CPS = sum(intCPS) #CPS
@@ -415,19 +393,91 @@ def Fundamental(code,Price):
     PC = Price / CPS
     PC = round(PC,2)
 
+    # 재무제표 "연간" 클릭하기
+    browser.find_elements_by_xpath('//*[@id="header-menu"]/div[1]/dl/dt[1]')[0].click()
+    browser.implicitly_wait(delay)
+    browser.find_elements_by_xpath('//*[@class="schtab"][1]/tbody/tr/td[3]')[0].click()
+    browser.implicitly_wait(delay)
+    htmlANU = browser.page_source  # 지금 현 상태의 page source불러오기
+    htmlANU1 = BeautifulSoup(htmlANU, 'html.parser')
 
-    return PE, FPE, EPSGrowth, PEG, PS, PB, CPS, PC
+    # EPS growth next year 내년 EPS성장률
+    htmlEPSGN = htmlANU1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyEPSGN = htmlEPSGN.find('tbody')
+    trEPSGN = tbodyEPSGN.find_all('tr')[25]
+    tdEPSGN = trEPSGN.find_all('td')
+
+    EPSGN = []
+    EPSGN.append(tdEPSGN[4].text)  # EPS 값 입력
+    EPSGN.append(tdEPSGN[5].text)  # EPS 값 입력
+
+    for i in range(len(EPSGN)):  # EPS 값 ,제거
+        EPSGN[i] = EPSGN[i].replace(',', '')
+
+    # intEPSG = list(map(int, EPSG))
+    # subEPSG = intEPSG[1]-intEPSG[0]
+    # divEPSG = subEPSG / intEPSG[0]
+    # EPSGrowth = divEPSG * 100
+    # EPSGrowth = round(EPSGrowth,2)
+    for i in range(len(EPSGN)):  # 공백 제거
+        if EPSGN[i] == '':
+            EPSGN[i] = '0'
+
+    intEPSGN = list(map(int, EPSGN))
+    divEPSGN = intEPSGN[1] / intEPSGN[0]
+    divEPSGN = divEPSGN - 1
+    EPSGrowthN = divEPSGN * 100
+    EPSGrowthN = round(EPSGrowthN, 2)
+
+    # EPS growth past 5 year 지난 5년 EPS성장률
+    htmlEPSGP5 = htmlANU1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyEPSGP5 = htmlEPSGP5.find('tbody')
+    trEPSGP5 = tbodyEPSGP5.find_all('tr')[25]
+    tdEPSGP5 = trEPSGP5.find_all('td')
+
+    EPSGP5 = []
+    EPSGP5.append(tdEPSGP5[0].text)
+    EPSGP5.append(tdEPSGP5[4].text)
+
+    for i in range(len(EPSGP5)):  # EPS 값 ,제거
+        EPSGP5[i] = EPSGP5[i].replace(',', '')
+
+    for i in range(len(EPSGP5)):  # 공백 제거
+        if EPSGP5[i] == '':
+            EPSGP5[i] = '0'
+
+    # intEPSG = list(map(int, EPSG))
+    # subEPSG = intEPSG[1]-intEPSG[0]
+    # divEPSG = subEPSG / intEPSG[0]
+    # EPSGrowth = divEPSG * 100
+    # EPSGrowth = round(EPSGrowth,2)
+    intEPSGP5 = list(map(int, EPSGP5))
+
+    if intEPSGP5[0] !=0:
+        divEPSGP5 = intEPSGP5[1] / intEPSGP5[0]
+        mulEPSGP5 = divEPSGP5**(1/4)
+        mulEPSGP50 = mulEPSGP5 - 1
+        EPSGrowthP5 = mulEPSGP50 * 100
+        EPSGrowthP5 = round(EPSGrowthP5, 2)
+    else:
+        EPSGrowthP5 = 0
 
 
-code = '005380'
+    return PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF, PFC, EPSGrowthN,EPSGrowthP5
+
+
+code = '096530'
 Exchange, Industry, Sector, MarketCap, \
 AnalystRecom, TargetPrice, AverageVolume, Price, IPODate = Descriptive(code)
 
-PE, FPE, EPSGrowth, PEG, PS, PB, CPS, PC = Fundamental(code,Price)
-# print('PE ratio : ',PE)
-# print('Forward PE ratio : ',FPE)
-# print('EPS Growth ratio : ',EPSGrowth)
-# print('PEG Growth ratio : ',PEG)
-# print('PS ratio : ',PS)
-# print('PB ratio : ',PB)
-# print('PC ratio : ',PC)
+PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF, PFC, EPSGrowthN, EPSGrowthP5 = Fundamental(code,Price)
+print('P/E ratio : ',PE)
+print('Forward P/E ratio : ',FPE)
+print('EPS Growth ratio this year : ',EPSGrowthT)
+print('EPS Growth ratio next year : ',EPSGrowthN)
+print('EPS Growth ratio past 5 year : ',EPSGrowthP5)
+print('PEG Growth ratio : ',PEG)
+print('P/S ratio : ',PS)
+print('P/B ratio : ',PB)
+print('P/C ratio : ',PC)
+print('P/FC ratio : ',PFC)
