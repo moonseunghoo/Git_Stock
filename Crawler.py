@@ -92,7 +92,7 @@ def stock_crawler_Quarter(code):
     #frame구조 안으로 들어가기
     browser.switch_to.frame(browser.find_element_by_id('coinfo_cp'))
 
-    #재무제표 "연간" 클릭하기
+    #재무제표 "분기" 클릭하기
     browser.find_elements_by_xpath('//*[@class="schtab"][1]/tbody/tr/td[4]')[0].click()
     delay = 2
     browser.implicitly_wait(delay)
@@ -148,8 +148,8 @@ def stock_crawler_Quarter(code):
 
     return pd.DataFrame(td,columns=date,index=col)
 
-#종목 정보
-def basics_Info(code):
+#기술적 분석
+def Descriptive(code):
 
     name = code
     base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
@@ -216,7 +216,7 @@ def basics_Info(code):
     tdPR[1:] = ''
     tdPR = str(tdPR)
     tdPR1 = tdPR[58:-3]
-    Price = tdPR1
+    Price = tdPR1.replace(',','')
 
 
     # 투자의견,목표 주가
@@ -262,6 +262,70 @@ def basics_Info(code):
 
     return Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,IPODate
 
-code = '293490'
-Exchange = basics_Info(code)
-print(Exchange)
+#분석 관련 변수
+def Fundamental(code,Price):
+    name = code
+    base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
+
+    browser.get(base_url)
+
+    # frame구조 안으로 들어가기
+    browser.switch_to.frame(browser.find_element_by_id('coinfo_cp'))
+
+    html0 = browser.page_source  # 지금 현 상태의 page source불러오기
+    html1 = BeautifulSoup(html0, 'html.parser')
+
+    #P/E 주가수익률
+    # 재무제표 "분기" 클릭하기
+    browser.find_elements_by_xpath('//*[@class="schtab"][1]/tbody/tr/td[4]')[0].click()
+    delay = 3
+    browser.implicitly_wait(delay)
+    htmlQUT = browser.page_source
+    htmlQUT1 = BeautifulSoup(htmlQUT,'html.parser')
+
+    htmlPE = htmlQUT1.find('table',{'class':'gHead01 all-width','summary':'주요재무정보를 제공합니다.'})
+    tbodyPE = htmlPE.find('tbody')
+    trPE = tbodyPE.find_all('tr')[25]
+    tdPE = trPE.find_all('td')
+
+    EPS = []
+    for i in range(1,5): #EPS 값 입력
+        EPS.append(tdPE[i].text)
+
+    for i in range(len(EPS)): #EPS 값 ,제거
+        EPS[i] = EPS[i].replace(',','')
+
+    intEPS =  list(map(int,EPS))
+    SumEPS = sum(intEPS)
+    PE = int(Price)/SumEPS
+    PE = round(PE,2)
+
+    #Forward P/E 예상주가수익률
+    htmlFPE = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyFPE = htmlFPE.find('tbody')
+    trFPE = tbodyFPE.find_all('tr')[25]
+    tdFPE = trFPE.find_all('td')
+
+    FEPS = []
+    for i in range(4, 8):  # EPS 값 입력
+        FEPS.append(tdFPE[i].text)
+
+    for i in range(len(FEPS)):  # EPS 값 ,제거
+        FEPS[i] = FEPS[i].replace(',', '')
+
+    intFEPS = list(map(int, FEPS))
+    SumFEPS = sum(intFEPS)
+    print(SumFEPS)
+    print(Price)
+    FPE = int(Price) / SumFEPS
+    FPE = round(FPE, 2)
+
+    return PE,FPE
+
+
+code = '005380'
+Exchange, Industry, Sector, MarketCap, \
+AnalystRecom, TargetPrice, AverageVolume, Price, IPODate = Descriptive(code)
+
+Fundamental = Fundamental(code,Price)
+print(Fundamental)
