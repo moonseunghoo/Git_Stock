@@ -337,7 +337,7 @@ def Fundamental(code,Price):
     # P/FC 자유현금흐름비율
     htmlFCF = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyFCF = htmlFCF.find('tbody')
-    trFCF = tbodyFCF.find_all('tr')[25]
+    trFCF = tbodyFCF.find_all('tr')[17]
     tdFCF = trFCF.find_all('td')
 
     FCF0 = []
@@ -356,6 +356,46 @@ def Fundamental(code,Price):
 
     PFC = Price / FCF
     PFC = round(PFC, 2)
+
+    # ROA 총자산이익률
+    htmlROA = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyROA = htmlROA.find('tbody')
+    trROA = tbodyROA.find_all('tr')[22]
+    tdROA = trROA.find_all('td')
+
+    ROA0 = []
+    ROA0.append(tdROA[4].text)
+
+    for i in range(len(ROA0)):  # EPS 값 ,제거
+        ROA0[i] = ROA0[i].replace(',', '')
+
+    for i in range(len(ROA0)):  # 공백 제거
+        if ROA0[i] == '':
+            ROA0[i] = '0'
+
+    intROA = list(map(str, ROA0))
+
+    ROA = ''.join(intROA)
+
+    # ROE 자기자본이익률
+    htmlROE = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyROE = htmlROE.find('tbody')
+    trROE = tbodyROE.find_all('tr')[21]
+    tdROE = trROE.find_all('td')
+
+    ROE0 = []
+    ROE0.append(tdROE[4].text)
+
+    for i in range(len(ROE0)):  # EPS 값 ,제거
+        ROE0[i] = ROE0[i].replace(',', '')
+
+    for i in range(len(ROE0)):  # 공백 제거
+        if ROE0[i] == '':
+            ROE0[i] = '0'
+
+    intROE = list(map(str, ROE0))
+
+    ROE = ''.join(intROE)
 
     #P/C 주가현금흐름비율
     browser.find_elements_by_xpath('//*[@class="wrapper-menu"]/dl/dt[4]')[0].click()
@@ -462,22 +502,101 @@ def Fundamental(code,Price):
     else:
         EPSGrowthP5 = 0
 
+    # EPS growth next 5 years 향후 5년 EPS성장률
+    htmlEPSGN5 = htmlANU1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyEPSGN5 = htmlEPSGN5.find('tbody')
+    trEPSGN5 = tbodyEPSGN5.find_all('tr')[25]
+    tdEPSGN5 = trEPSGN5.find_all('td')
 
-    return PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF, PFC, EPSGrowthN,EPSGrowthP5
+    EPSGN5 = []
+    EPSGN5.append(tdEPSGN5[3].text)
+    EPSGN5.append(tdEPSGN5[7].text)
+
+    for i in range(len(EPSGN5)):  # EPS 값 ,제거
+        EPSGN5[i] = EPSGN5[i].replace(',', '')
+
+    for i in range(len(EPSGN5)):  # 공백 제거
+        if EPSGN5[i] == '':
+            EPSGN5[i] = '0'
+
+    # intEPSG = list(map(int, EPSG))
+    # subEPSG = intEPSG[1]-intEPSG[0]
+    # divEPSG = subEPSG / intEPSG[0]
+    # EPSGrowth = divEPSG * 100
+    # EPSGrowth = round(EPSGrowth,2)
+    intEPSGN5 = list(map(int, EPSGN5))
+
+    if intEPSGN5[0] != 0:
+        divEPSGN5 = intEPSGN5[1] / intEPSGN5[0]
+        mulEPSGN5 = divEPSGN5 ** (1 / 4)
+        mulEPSGN50 = mulEPSGN5 - 1
+        EPSGrowthN5 = mulEPSGN50 * 100
+        EPSGrowthN5 = round(EPSGrowthN5, 2)
+    else:
+        EPSGrowthN5 = 0
+
+    # Sales growth past 5 years 지난 5년 매출성장률
+    htmlSGP5 = htmlANU1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodySGP5 = htmlSGP5.find('tbody')
+    trSGP5 = tbodySGP5.find_all('tr')[0]
+    tdSGP5 = trSGP5.find_all('td')
+
+    SGP5 = []
+    SGP5.append(tdSGP5[0].text)
+    SGP5.append(tdSGP5[4].text)
+
+    for i in range(len(SGP5)):  # EPS 값 ,제거
+        SGP5[i] = SGP5[i].replace(',', '')
+
+    for i in range(len(SGP5)):  # 공백 제거
+        if SGP5[i] == '':
+            SGP5[i] = '0'
+
+    # intEPSG = list(map(int, EPSG))
+    # subEPSG = intEPSG[1]-intEPSG[0]
+    # divEPSG = subEPSG / intEPSG[0]
+    # EPSGrowth = divEPSG * 100
+    # EPSGrowth = round(EPSGrowth,2)
+    intSGP5 = list(map(int, SGP5))
+
+    if intSGP5[0] != 0:
+        divSGP5 = intSGP5[1] / intSGP5[0]
+        mulSGP5 = divSGP5 ** (1 / 4)
+        mulSGP50 = mulSGP5 - 1
+        SalesGrowthP5 = mulSGP50 * 100
+        SalesGrowthP5 = round(SalesGrowthP5, 2)
+    else:
+        SalesGrowthP5 = 0
 
 
-code = '096530'
+
+
+
+
+    return PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC,\
+           FCF, PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA, ROE
+
+
+code = '005380'
 Exchange, Industry, Sector, MarketCap, \
 AnalystRecom, TargetPrice, AverageVolume, Price, IPODate = Descriptive(code)
 
-PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF, PFC, EPSGrowthN, EPSGrowthP5 = Fundamental(code,Price)
+PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
+PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA,\
+ROE = Fundamental(code,Price)
+
 print('P/E ratio : ',PE)
 print('Forward P/E ratio : ',FPE)
 print('EPS Growth ratio this year : ',EPSGrowthT)
 print('EPS Growth ratio next year : ',EPSGrowthN)
 print('EPS Growth ratio past 5 year : ',EPSGrowthP5)
+print('EPS Growth ratio next 5 year : ',EPSGrowthN5)
+print('Sales Growth ratio past 5 year : ',SalesGrowthP5)
 print('PEG Growth ratio : ',PEG)
 print('P/S ratio : ',PS)
 print('P/B ratio : ',PB)
 print('P/C ratio : ',PC)
 print('P/FC ratio : ',PFC)
+print('ROA ratio : ',ROA)
+print('ROE ratio : ',ROE)
+
