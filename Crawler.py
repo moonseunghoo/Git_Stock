@@ -12,6 +12,9 @@ from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지, 더 간단히 얻을 수 있다는 장점이 있다고 한다.
 from datetime import datetime
 from selenium.webdriver import Chrome
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 browser = Chrome()
 browser.maximize_window()
@@ -214,7 +217,7 @@ def Fundamental(code,Price):
     htmlQUT = browser.page_source
     htmlQUT1 = BeautifulSoup(htmlQUT,'html.parser')
 
-    # P/E 주가수익률
+    # P/E 주가수익률 최근 4분기
     htmlPE = htmlQUT1.find('table',{'class':'gHead01 all-width','summary':'주요재무정보를 제공합니다.'})
     tbodyPE = htmlPE.find('tbody')
     trPE = tbodyPE.find_all('tr')[25]
@@ -236,7 +239,7 @@ def Fundamental(code,Price):
     PE = Price/EPS
     PE = round(PE,2)
 
-    #Forward P/E 예상주가수익률
+    #Forward P/E 예상주가수익률 최근,미래 4분기
     htmlFPE = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyFPE = htmlFPE.find('tbody')
     trFPE = tbodyFPE.find_all('tr')[25]
@@ -258,7 +261,7 @@ def Fundamental(code,Price):
     FPE = int(Price) / SumFEPS
     FPE = round(FPE, 2)
 
-    #EPS growth this year 올해 EPS성장률
+    #EPS growth this year 올해 EPS성장률 최근 4분기
     htmlEPSGT = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyEPSGT = htmlEPSGT.find('tbody')
     trEPSGT = tbodyEPSGT.find_all('tr')[25]
@@ -290,14 +293,14 @@ def Fundamental(code,Price):
     else:
         EPSGrowthT = 0
 
-    #PEG 주가이익성장률
+    #PEG 주가이익성장률 최근 4분기
     if EPSGrowthT != 0:
         PEG = PE / EPSGrowthT
         PEG = round(PEG,2)
     else:
         PEG = 0
 
-    #P/S 주가매출액비율
+    #P/S 주가매출액비율 최근 4분기
     htmlPS = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyPS = htmlPS.find('tbody')
     trPS = tbodyPS.find_all('tr')[0]
@@ -320,7 +323,7 @@ def Fundamental(code,Price):
     PS = int(MarketCap) / Sales
     PS = round(PS,2)
 
-    #P/B 주가순자산비율
+    #P/B 주가순자산비율 최근 분기
     htmlBP = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyBP = htmlBP.find('tbody')
     trBP = tbodyBP.find_all('tr')[27]
@@ -334,7 +337,7 @@ def Fundamental(code,Price):
     PB = Price / BP #PBR
     PB = round(PB,2)
 
-    # P/FC 자유현금흐름비율
+    # P/FC 자유현금흐름비율 최근 4분기
     htmlFCF = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyFCF = htmlFCF.find('tbody')
     trFCF = tbodyFCF.find_all('tr')[17]
@@ -357,7 +360,7 @@ def Fundamental(code,Price):
     PFC = Price / FCF
     PFC = round(PFC, 2)
 
-    # ROA 총자산이익률
+    # ROA 총자산이익률 최근 분기
     htmlROA = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyROA = htmlROA.find('tbody')
     trROA = tbodyROA.find_all('tr')[22]
@@ -377,7 +380,7 @@ def Fundamental(code,Price):
 
     ROA = ''.join(intROA)
 
-    # ROE 자기자본이익률
+    # ROE 자기자본이익률 최근 분기
     htmlROE = htmlQUT1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyROE = htmlROE.find('tbody')
     trROE = tbodyROE.find_all('tr')[21]
@@ -397,7 +400,9 @@ def Fundamental(code,Price):
 
     ROE = ''.join(intROE)
 
-    #P/C 주가현금흐름비율
+    # ROI 투자자본수익률
+
+    #P/C 주가현금흐름비율 최근 4분기
     browser.find_elements_by_xpath('//*[@class="wrapper-menu"]/dl/dt[4]')[0].click()
     delay = 5
     browser.implicitly_wait(delay)
@@ -406,12 +411,11 @@ def Fundamental(code,Price):
     browser.find_element_by_xpath('//*[@id="hfinGubun2"]').click()
     browser.implicitly_wait(delay)
 
-    htmlII = browser.page_source
-    htmlII0 = BeautifulSoup(htmlII, 'html.parser')
+    htmlIIP = browser.page_source
+    htmlIIP0 = BeautifulSoup(htmlIIP, 'html.parser')
 
-    htmlCPS = htmlII0.find('table',{'class':'gHead01 all-width data-list',
+    htmlCPS = htmlIIP0.find('table',{'class':'gHead01 all-width data-list',
                                     'summary':'IFRS연결 분기 투자분석 정보를 제공합니다.'})
-
     tbodyCPS = htmlCPS.find('tbody')
     trCPS = tbodyCPS.find_all('tr')[8]
     tdCPS = trCPS.find_all('td')
@@ -433,6 +437,187 @@ def Fundamental(code,Price):
     PC = Price / CPS
     PC = round(PC,2)
 
+    browser.find_element_by_xpath('//*[@id="frqTyp0_2"]').click()
+    browser.implicitly_wait(delay)
+    browser.find_element_by_xpath('//*[@id="hfinGubun2"]').click()
+    browser.implicitly_wait(delay)
+
+    # Operating Margin 영업이익율 최근 분기
+    browser.find_element_by_xpath('//*[@id="frqTyp1"]').click()
+    browser.implicitly_wait(delay)
+    browser.find_element_by_xpath('//*[@id="hfinGubun"]').click()
+    browser.implicitly_wait(delay)
+    time.sleep(0.5)
+
+    htmlIIP1 = browser.page_source
+    htmlIIP2 = BeautifulSoup(htmlIIP1, 'html.parser')
+
+    htmlOM = htmlIIP2.find('table',{'class':'gHead01 all-width data-list',
+                                    'summary':'IFRS연결 분기 투자분석 정보를 제공합니다.'})
+    tbodyOM = htmlOM.find('tbody')
+    trOM = tbodyOM.find_all('tr')[3]
+    tdOM = trOM.find_all('td')
+
+    OM0 = []
+    OM0.append(tdOM[5].text)
+
+    for i in range(len(OM0)): #값 ,제거
+        OM0[i] = OM0[i].replace(',','')
+
+    for i in range(len(OM0)):  # 공백 제거
+        if OM0[i] == '':
+            OM0[i] = '0'
+
+    strOM =  list(map(str,OM0))
+    OM = ''.join(strOM)
+
+    # Net Profit Margin 순이익율 최근 분기
+    htmlNPM = htmlIIP2.find('table',{'class':'gHead01 all-width data-list',
+                                    'summary':'IFRS연결 분기 투자분석 정보를 제공합니다.'})
+    tbodyNPM = htmlNPM.find('tbody')
+    trNPM = tbodyNPM.find_all('tr')[6]
+    tdNPM = trNPM.find_all('td')
+
+    NPM0 = []
+    NPM0.append(tdNPM[5].text)
+
+    for i in range(len(NPM0)): #값 ,제거
+        NPM0[i] = NPM0[i].replace(',','')
+
+    for i in range(len(NPM0)):  # 공백 제거
+        if NPM0[i] == '':
+            NPM0[i] = '0'
+
+    strNPM =  list(map(str,NPM0))
+    NPM = ''.join(strNPM)
+
+    # Payout Ratio 배당성향 최근 분기
+    htmlPR = htmlIIP2.find('table',{'class':'gHead01 all-width data-list',
+                                    'summary':'IFRS연결 연간 투자분석 정보를 제공합니다.'})
+    tbodyPR = htmlPR.find('tbody')
+    trPR = tbodyPR.find_all('tr')[35]
+    tdPR = trPR.find_all('td')
+
+    PR0 = []
+    PR0.append(tdPR[5].text)
+
+    for i in range(len(PR0)):  # 값 ,제거
+        PR0[i] = PR0[i].replace(',', '')
+
+    for i in range(len(PR0)):  # 공백 제거
+        if PR0[i] == '':
+            PR0[i] = '0'
+
+    strPR = list(map(str, PR0))
+    PR = ''.join(strPR)
+
+    #Current Ratio 유동비율 최근 분기
+    browser.find_element_by_xpath('//*[@id="val_td3"]').click()
+    browser.implicitly_wait(delay)
+    browser.find_element_by_xpath('//*[@id="frqTyp1"]').click()
+    browser.implicitly_wait(delay)
+    browser.find_element_by_xpath('//*[@id="hfinGubun"]').click()
+    browser.implicitly_wait(delay)
+    time.sleep(0.5)
+
+    htmlIIS = browser.page_source
+    htmlIIS0 = BeautifulSoup(htmlIIS, 'html.parser')
+    htmlCR = htmlIIS0.find_all('table',{'class':'gHead01 all-width data-list'})[0]
+
+    tbodyCR = htmlCR.find('tbody')
+    trCR = tbodyCR.find_all('tr')[12]
+    tdCR = trCR.find_all('td')
+
+    CR0 = []
+    CR0.append(tdCR[5].text)
+
+    for i in range(len(CR0)):  # 값 ,제거
+        CR0[i] = CR0[i].replace(',', '')
+
+    for i in range(len(CR0)):  # 공백 제거
+        if CR0[i] == '':
+            CR0[i] = '0'
+        else:
+            break
+
+    intCR = list(map(str, CR0))
+    CR = ''.join(intCR)
+
+    #Quick Ratio 당좌비율 최근 분기
+    htmlQR = htmlIIS0.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
+    tbodyQR = htmlQR.find('tbody')
+    trQR = tbodyQR.find_all('tr')[15]
+    tdQR = trQR.find_all('td')
+
+    QR0 = []
+    QR0.append(tdQR[5].text)
+
+    for i in range(len(QR0)):  # 값 ,제거
+        QR0[i] = QR0[i].replace(',', '')
+
+    for i in range(len(QR0)):  # 공백 제거
+        if QR0[i] == '':
+            QR0[i] = '0'
+        else:
+            break
+
+    intQR = list(map(str, QR0))
+    QR = ''.join(intQR)
+
+    #Debt/Equity 부채비율 최근 분기
+    htmlDE = htmlIIS0.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
+    tbodyDE = htmlDE.find('tbody')
+    trDE = tbodyDE.find_all('tr')[0]
+    tdDE = trDE.find_all('td')
+
+    DE0 = []
+    DE0.append(tdDE[5].text)
+
+    for i in range(len(DE0)):  # 값 ,제거
+        DE0[i] = DE0[i].replace(',', '')
+
+    for i in range(len(DE0)):  # 공백 제거
+        if DE0[i] == '':
+            DE0[i] = '0'
+        else:
+            break
+
+    intDE = list(map(str, DE0))
+    DE = ''.join(intDE)
+
+    #Gross Margin 매출총이익 최근 4분기
+    browser.find_element_by_xpath('//*[@id="header-menu"]/div[1]/dl/dt[3]').click()
+    browser.implicitly_wait(delay)
+    browser.find_element_by_xpath('//*[@id="frqTyp1"]').click()
+    browser.implicitly_wait(delay)
+    browser.find_element_by_xpath('//*[@id="hfinGubun"]').click()
+    browser.implicitly_wait(delay)
+    time.sleep(0.5)
+
+    htmlFA = browser.page_source
+    htmlFA0 = BeautifulSoup(htmlFA, 'html.parser')
+    htmlGM = htmlFA0.find('table', {'class': 'gHead01 all-width data-list'})
+
+    tbodyGM = htmlGM.find('tbody')
+    trGM = tbodyGM.find_all('tr')[25]
+    tdGM = trGM.find_all('td')
+
+    GM0 = []
+    for i in range(2, 6):  # EPS 값 입력
+        GM0.append(tdGM[i].text)
+
+    for i in range(len(GM0)):  # 값 ,제거
+        GM0[i] = GM0[i].replace(',', '')
+
+    for i in range(len(GM0)):  # 공백 제거
+        if GM0[i] == '':
+            GM0[i] = '0'
+        else:
+            break
+
+    strGM = list(map(float, GM0))
+    GM = sum(strGM)
+
     # 재무제표 "연간" 클릭하기
     browser.find_elements_by_xpath('//*[@id="header-menu"]/div[1]/dl/dt[1]')[0].click()
     browser.implicitly_wait(delay)
@@ -441,7 +626,7 @@ def Fundamental(code,Price):
     htmlANU = browser.page_source  # 지금 현 상태의 page source불러오기
     htmlANU1 = BeautifulSoup(htmlANU, 'html.parser')
 
-    # EPS growth next year 내년 EPS성장률
+    # EPS growth next year 내년 EPS성장률 최근,미래
     htmlEPSGN = htmlANU1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyEPSGN = htmlEPSGN.find('tbody')
     trEPSGN = tbodyEPSGN.find_all('tr')[25]
@@ -469,7 +654,7 @@ def Fundamental(code,Price):
     EPSGrowthN = divEPSGN * 100
     EPSGrowthN = round(EPSGrowthN, 2)
 
-    # EPS growth past 5 year 지난 5년 EPS성장률
+    # EPS growth past 5 year 지난 5년 EPS성장률 최근,과거
     htmlEPSGP5 = htmlANU1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyEPSGP5 = htmlEPSGP5.find('tbody')
     trEPSGP5 = tbodyEPSGP5.find_all('tr')[25]
@@ -502,7 +687,7 @@ def Fundamental(code,Price):
     else:
         EPSGrowthP5 = 0
 
-    # EPS growth next 5 years 향후 5년 EPS성장률
+    # EPS growth next 5 years 향후 5년 EPS성장률 최근,미래
     htmlEPSGN5 = htmlANU1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyEPSGN5 = htmlEPSGN5.find('tbody')
     trEPSGN5 = tbodyEPSGN5.find_all('tr')[25]
@@ -535,7 +720,7 @@ def Fundamental(code,Price):
     else:
         EPSGrowthN5 = 0
 
-    # Sales growth past 5 years 지난 5년 매출성장률
+    # Sales growth past 5 years 지난 5년 매출성장률 최근,과거
     htmlSGP5 = htmlANU1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodySGP5 = htmlSGP5.find('tbody')
     trSGP5 = tbodySGP5.find_all('tr')[0]
@@ -571,11 +756,37 @@ def Fundamental(code,Price):
 
 
 
-
-
     return PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC,\
-           FCF, PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA, ROE
+           FCF, PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5,\
+           SalesGrowthP5, ROA, ROE, CR, QR, DE, GM, OM, NPM, PR
 
+#출력 함수
+def PrintA(PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
+PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA,\
+ROE, CR, QR, DE, GM, OM, NPM, PR):
+    print('P/E ratio : ', PE)
+    print('Forward P/E ratio : ', FPE)
+    print('EPS Growth ratio this year : ', EPSGrowthT)
+    print('EPS Growth ratio next year : ', EPSGrowthN)
+    print('EPS Growth ratio past 5 year : ', EPSGrowthP5)
+    print('EPS Growth ratio next 5 year : ', EPSGrowthN5)
+    print('Sales Growth ratio past 5 year : ', SalesGrowthP5)
+    print('PEG Growth ratio : ', PEG)
+    print('P/S ratio : ', PS)
+    print('P/B ratio : ', PB)
+    print('P/C ratio : ', PC)
+    print('P/FC ratio : ', PFC)
+    print('ROA ratio : ', ROA)
+    print('ROE ratio : ', ROE)
+    print('Current ratio : ', CR)
+    print('Quick ratio : ', QR)
+    print('Debt/Equity : ', DE)
+    print('Gross Margin : ', GM)
+    print('Operating Margin : ', OM)
+    print('Net Profit Margin : ', NPM)
+    print('Payout Ratio : ', PR)
+
+    return
 
 code = '005380'
 Exchange, Industry, Sector, MarketCap, \
@@ -583,20 +794,10 @@ AnalystRecom, TargetPrice, AverageVolume, Price, IPODate = Descriptive(code)
 
 PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
 PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA,\
-ROE = Fundamental(code,Price)
+ROE, CR, QR, DE, GM, OM, NPM, PR = Fundamental(code,Price)
 
-print('P/E ratio : ',PE)
-print('Forward P/E ratio : ',FPE)
-print('EPS Growth ratio this year : ',EPSGrowthT)
-print('EPS Growth ratio next year : ',EPSGrowthN)
-print('EPS Growth ratio past 5 year : ',EPSGrowthP5)
-print('EPS Growth ratio next 5 year : ',EPSGrowthN5)
-print('Sales Growth ratio past 5 year : ',SalesGrowthP5)
-print('PEG Growth ratio : ',PEG)
-print('P/S ratio : ',PS)
-print('P/B ratio : ',PB)
-print('P/C ratio : ',PC)
-print('P/FC ratio : ',PFC)
-print('ROA ratio : ',ROA)
-print('ROE ratio : ',ROE)
+PrintA(PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
+    PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA,\
+    ROE, CR, QR, DE, GM, OM, NPM, PR)
+
 
