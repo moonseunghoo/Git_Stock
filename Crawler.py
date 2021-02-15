@@ -11,6 +11,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지, 더 간단히 얻을 수 있다는 장점이 있다고 한다.
 from datetime import datetime
+from pykrx import stock
 from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -18,6 +19,16 @@ from selenium.webdriver.support import expected_conditions as EC
 
 browser = Chrome()
 browser.maximize_window()
+
+
+# 상장 기업 종목코드
+def All_stock():
+    df = stock.get_market_ohlcv_by_ticker('20210214',market='ALL')
+    list_of_index = [item for item in df.index]
+    ticker = sorted(list_of_index) #종목코드 오름차순
+    ticker_name = [stock.get_market_ticker_name(i) for i in ticker] # 종목명 오름차순
+
+    return ticker,ticker_name
 
 #연간 재무제표
 def stock_crawler_Annual(code):
@@ -86,7 +97,7 @@ def stock_crawler_Annual(code):
 
     return pd.DataFrame(td,columns=date,index=col)
 
-#기술적 분석
+#서술적 분석
 def Descriptive(code):
 
     name = code
@@ -99,6 +110,33 @@ def Descriptive(code):
 
     html0 = browser.page_source  # 지금 현 상태의 page source불러오기
     html1 = BeautifulSoup(html0, 'html.parser')
+
+    #Dividend Yield 배당수익률
+    browser.find_elements_by_xpath('//*[@id="cns_Tab21"]')[0].click()
+    delay = 5
+    browser.implicitly_wait(delay)
+    htmlDY = browser.page_source
+    htmlDY1 = BeautifulSoup(htmlDY,'html.parser')
+
+    htmlfDY = htmlDY1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
+    tbodyDY = htmlfDY.find('tbody')
+    trDY = tbodyDY.find_all('tr')[30]
+    tdDY = trDY.find_all('td')
+
+    DY0 = []
+    DY0.append(tdDY[4].text)
+
+    for i in range(len(DY0)):
+        DY0[i] = DY0[i].replace(',','')
+
+    for i in range(len(DY0)):
+        if DY0[i] == '':
+            DY0[i] ='0'
+        else:
+            break
+
+    strDY = list(map(str,DY0))
+    DY = ''.join(strDY)
 
     # 거래소,산업군,섹터
     htmlEIS = html1.find('td',{'class':'cmp-table-cell td0101'})
@@ -173,12 +211,15 @@ def Descriptive(code):
 
     tbodyTP = htmlART.find('tbody')
     trTP = tbodyTP.find_all('tr')[1]
-    tdTP = trTP.find_all('td')[1]
+    tdTP = trTP.find_all('td')
 
-    tdTP = str(tdTP)
-    tdTP1 = re.findall("\d+", tdTP)
-    tdTP1 = '.'.join(tdTP1)
-    TargetPrice = tdTP1  # 목표주가
+    if len(tdTP) >= 2:
+        tdTP = str(tdTP[1])
+        tdTP1 = re.findall("\d+", tdTP)
+        tdTP1 = '.'.join(tdTP1)
+        TargetPrice = tdTP1  # 목표주가
+    else:
+        TargetPrice = 0
 
     # 기업공개일
     browser.find_elements_by_xpath('//*[@class="wrapper-menu"]/dl/dt[2]')[0].click()
@@ -198,7 +239,7 @@ def Descriptive(code):
     tdIPO = '/'.join(tdIPO)
     IPODate = tdIPO
 
-    return Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,IPODate
+    return DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,IPODate
 
 #분석 관련 변수
 def Fundamental(code,Price):
@@ -490,8 +531,9 @@ def Fundamental(code,Price):
 
     strNPM =  list(map(str,NPM0))
     NPM = ''.join(strNPM)
+    time.sleep(0.2)
 
-    # Payout Ratio 배당성향 최근 분기
+    # Payout Ratio 배당성향 최근 동기
     htmlPR = htmlIIP2.find('table',{'class':'gHead01 all-width data-list',
                                     'summary':'IFRS연결 연간 투자분석 정보를 제공합니다.'})
     tbodyPR = htmlPR.find('tbody')
@@ -760,10 +802,30 @@ def Fundamental(code,Price):
            FCF, PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5,\
            SalesGrowthP5, ROA, ROE, CR, QR, DE, GM, OM, NPM, PR
 
+#기술적 분석
+def Technical(code):
+    return
+
+
 #출력 함수
-def PrintA(PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
+def PrintA(DY, Exchange, Industry, Sector, MarketCap, \
+AnalystRecom, TargetPrice, AverageVolume, Price,
+IPODate,PE,FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
 PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA,\
 ROE, CR, QR, DE, GM, OM, NPM, PR):
+
+    print('----Descriptive----')
+    print('Exchange : ',Exchange)
+    print('Indusrty : ',Industry)
+    print('Sector : ',Sector)
+    print('MarketCap : ',MarketCap)
+    print('AnalystRecom : ',AnalystRecom)
+    print('TargetPrice : ',TargetPrice)
+    print('AverageVolume : ',AverageVolume)
+    print('Price : ',Price)
+    print('Dividend Yield : ',DY)
+    print('IPODate : ',IPODate)
+    print('----Fundamental----')
     print('P/E ratio : ', PE)
     print('Forward P/E ratio : ', FPE)
     print('EPS Growth ratio this year : ', EPSGrowthT)
@@ -788,16 +850,38 @@ ROE, CR, QR, DE, GM, OM, NPM, PR):
 
     return
 
-code = '005380'
-Exchange, Industry, Sector, MarketCap, \
+
+
+ticker, ticker_name = All_stock()
+
+# for code in ticker:
+#     DY, Exchange, Industry, Sector, MarketCap, \
+#     AnalystRecom, TargetPrice, AverageVolume, Price, IPODate = Descriptive(code)
+#
+#     PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
+#     PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA,\
+#     ROE, CR, QR, DE, GM, OM, NPM, PR = Fundamental(code,Price)
+#
+#     PrintA(DY, Exchange, Industry, Sector, MarketCap, \
+#     AnalystRecom, TargetPrice, AverageVolume, Price,
+#     IPODate,PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
+#     PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA,\
+#     ROE, CR, QR, DE, GM, OM, NPM, PR)
+
+
+code = "000020"
+
+DY, Exchange, Industry, Sector, MarketCap, \
 AnalystRecom, TargetPrice, AverageVolume, Price, IPODate = Descriptive(code)
 
 PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
 PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA,\
 ROE, CR, QR, DE, GM, OM, NPM, PR = Fundamental(code,Price)
 
-PrintA(PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
-    PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA,\
-    ROE, CR, QR, DE, GM, OM, NPM, PR)
+PrintA(DY, Exchange, Industry, Sector, MarketCap, \
+AnalystRecom, TargetPrice, AverageVolume, Price,
+IPODate,PE, FPE, EPSGrowthT, PEG, PS, PB, CPS, PC, FCF,\
+PFC, EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, ROA,\
+ROE, CR, QR, DE, GM, OM, NPM, PR)
 
 
