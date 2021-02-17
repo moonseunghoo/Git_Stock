@@ -6,6 +6,7 @@ import urllib.request
 import json
 import re
 import datetime as dt
+import traceback
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지, 더 간단히 얻을 수 있다는 장점이 있다고 한다.
@@ -16,6 +17,7 @@ from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from ticker_name_crawler import ticker
 
 options = webdriver.ChromeOptions()
 options.add_argument('headless')
@@ -149,11 +151,13 @@ def Enterprise_Status(code):
     tbodyAR = htmlART.find('tbody')
     trAR = tbodyAR.find_all('tr')[1]
     tdAR = trAR.find_all('td')[0]
-
-    tdAR = str(tdAR)
-    tdAR1 = re.findall("\d+",tdAR)
-    tdAR1 = '.'.join(tdAR1)
-    AnalystRecom = tdAR1 #투자의견
+    if trAR.find_all('td')[0].text !='최근3개월 이내에 제시된 의견이 없습니다':
+        tdAR = str(tdAR)
+        tdAR1 = re.findall("\d+",tdAR)
+        tdAR1 = '.'.join(tdAR1)
+        AnalystRecom = tdAR1 #투자의견
+    else:
+        AnalystRecom = 0
 
     #목표 주가
     tbodyTP = htmlART.find('tbody')
@@ -239,8 +243,8 @@ def Enterprise_Status(code):
         tdEPSGP5 = trEPSGP5.find_all('td')
 
         EPSGP5 = []
+        EPSGP5.append(tdEPSGP5[0].text)  # EPS 값 입력
         EPSGP5.append(tdEPSGP5[4].text)  # EPS 값 입력
-        EPSGP5.append(tdEPSGP5[5].text)  # EPS 값 입력
 
         for i in range(len(EPSGP5)):  # EPS 값 ,제거
             EPSGP5[i] = EPSGP5[i].replace(',', '')
@@ -264,30 +268,47 @@ def Enterprise_Status(code):
 
     htmlEPSGN5 = htmlEPSGN5b1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyEPSGN5 = htmlEPSGN5.find('tbody')
-    trEPSGN5 = tbodyEPSGN5.find_all('tr')[25]
-    tdEPSGN5 = trEPSGN5.find_all('td')
 
-    EPSGN5 = []
-    EPSGN5.append(tdEPSGN5[3].text)
-    EPSGN5.append(tdEPSGN5[7].text)
+    try:
+        # EPS 찾기
+        for i in range(0, 34):
+            if tbodyEPSGN5.find_all('th')[i].text == 'EPS(원)':
+                cEPSGN5 = tbodyEPSGN5('th')[i]
+                break
+            else:
+                cEPSGN5 = None
 
-    for i in range(len(EPSGN5)):  # EPS 값 ,제거
-        EPSGN5[i] = EPSGN5[i].replace(',', '')
-
-    for i in range(len(EPSGN5)):  # 공백 제거
-        if EPSGN5[i] == '':
-            EPSGN5[i] = '0'
-
-    intEPSGN5 = list(map(int, EPSGN5))
-
-    if intEPSGN5[0] != 0:
-        divEPSGN5 = intEPSGN5[1] / intEPSGN5[0]
-        mulEPSGN5 = divEPSGN5 ** (1 / 4)
-        mulEPSGN50 = mulEPSGN5 - 1
-        EPSGrowthN5 = mulEPSGN50 * 100
-        EPSGrowthN5 = round(EPSGrowthN5, 2)
-    else:
+    except:
         EPSGrowthN5 = 0
+        print('error')
+
+    if cEPSGN5 != None:
+        trEPSGN5 = cEPSGN5.parent
+        tdEPSGN5 = trEPSGN5.find_all('td')
+
+        EPSGN5 = []
+        EPSGN5.append(tdEPSGN5[3].text)  # EPS 값 입력
+        EPSGN5.append(tdEPSGN5[7].text)  # EPS 값 입력
+
+        for i in range(len(EPSGN5)):  # EPS 값 ,제거
+            EPSGN5[i] = EPSGN5[i].replace(',', '')
+
+        for i in range(len(EPSGN5)):  # 공백 제거
+            if EPSGN5[i] == '':
+                EPSGN5[i] = '0'
+
+        intEPSGN5 = list(map(int, EPSGN5))
+
+        if intEPSGN5[0] and intEPSGN5[1] != 0:
+            divEPSGN5 = intEPSGN5[1] / intEPSGN5[0]
+            diEPSGN5 = round(divEPSGN5,2)
+            mulEPSGN5 = diEPSGN5 ** (1 / 4)
+            mulEPSGN50 = mulEPSGN5 - 1
+            muEPSGN5 = mulEPSGN50.real
+            EPSGrowthN5 = muEPSGN5 * 100
+            EPSGrowthN5 = round(EPSGrowthN5, 2)
+        else:
+            EPSGrowthN5 = 0
 
     # Sales growth past 5 years 지난 5년 매출성장률 최근,과거
     browser_first_p.find_element_by_xpath('//*[@id="cns_Tab21"]').click()
@@ -298,30 +319,45 @@ def Enterprise_Status(code):
 
     htmlSGP5 = htmlSGP5b1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodySGP5 = htmlSGP5.find('tbody')
-    trSGP5 = tbodySGP5.find_all('tr')[0]
-    tdSGP5 = trSGP5.find_all('td')
 
-    SGP5 = []
-    SGP5.append(tdSGP5[0].text)
-    SGP5.append(tdSGP5[4].text)
+    try:
+        # 매출액 찾기
+        for i in range(0, 34):
+            if tbodySGP5.find_all('th')[i].text == '매출액':
+                cSGP5 = tbodySGP5('th')[i]
+                break
+            else:
+                cSGP5 = None
 
-    for i in range(len(SGP5)):  # EPS 값 ,제거
-        SGP5[i] = SGP5[i].replace(',', '')
-
-    for i in range(len(SGP5)):  # 공백 제거
-        if SGP5[i] == '':
-            SGP5[i] = '0'
-
-    intSGP5 = list(map(int, SGP5))
-
-    if intSGP5[0] != 0:
-        divSGP5 = intSGP5[1] / intSGP5[0]
-        mulSGP5 = divSGP5 ** (1 / 4)
-        mulSGP50 = mulSGP5 - 1
-        SalesGrowthP5 = mulSGP50 * 100
-        SalesGrowthP5 = round(SalesGrowthP5, 2)
-    else:
+    except:
         SalesGrowthP5 = 0
+        print('error')
+
+    if cSGP5 != None:
+        trSGP5 = cSGP5.parent
+        tdSGP5 = trSGP5.find_all('td')
+
+        SGP5 = []
+        SGP5.append(tdSGP5[0].text)
+        SGP5.append(tdSGP5[4].text)
+
+        for i in range(len(SGP5)):  #  값 ,제거
+            SGP5[i] = SGP5[i].replace(',', '')
+
+        for i in range(len(SGP5)):  # 공백 제거
+            if SGP5[i] == '':
+                SGP5[i] = '0'
+
+        intSGP5 = list(map(int, SGP5))
+
+        if intSGP5[0] != 0:
+            divSGP5 = intSGP5[1] / intSGP5[0]
+            mulSGP5 = divSGP5 ** (1 / 4)
+            mulSGP50 = mulSGP5 - 1
+            SalesGrowthP5 = mulSGP50 * 100
+            SalesGrowthP5 = round(SalesGrowthP5, 2)
+        else:
+            SalesGrowthP5 = 0
 
     # 재무제표 "분기"
     # P/E 주가수익률 최근 4분기
@@ -332,24 +368,39 @@ def Enterprise_Status(code):
     htmlPEb1 = BeautifulSoup(htmlPEb, 'html.parser')
     htmlPE = htmlPEb1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyPE = htmlPE.find('tbody')
-    trPE = tbodyPE.find_all('tr')[25]
-    tdPE = trPE.find_all('td')
 
-    EPS0 = []
-    for i in range(1, 5):  # EPS 값 입력
-        EPS0.append(tdPE[i].text)
+    try:
+        # EPS 찾기
+        for i in range(0, 34):
+            if tbodyPE.find_all('th')[i].text == 'EPS(원)':
+                cPE = tbodyPE('th')[i]
+                break
+            else:
+                cPE = None
 
-    for i in range(len(EPS0)):  # EPS 값 ,제거
-        EPS0[i] = EPS0[i].replace(',', '')
+    except:
+        PE = 0
+        print('error')
 
-    for i in range(len(EPS0)):  # 공백 제거
-        if EPS0[i] == '':
-            EPS0[i] = '0'
+    if cPE != None:
+        trPE = cPE.parent
+        tdPE = trPE.find_all('td')
 
-    intEPS = list(map(int, EPS0))
-    EPS = sum(intEPS)
-    PE = Price / EPS
-    PE = round(PE, 2)
+        EPS0 = []
+        for i in range(1, 5):  # EPS 값 입력
+            EPS0.append(tdPE[i].text)
+
+        for i in range(len(EPS0)):  # EPS 값 ,제거
+            EPS0[i] = EPS0[i].replace(',', '')
+
+        for i in range(len(EPS0)):  # 공백 제거
+            if EPS0[i] == '':
+                EPS0[i] = '0'
+
+        intEPS = list(map(int, EPS0))
+        EPS = sum(intEPS)
+        PE = Price / EPS
+        PE = round(PE, 2)
 
     # Forward P/E 예상주가수익률 최근,미래 4분기
     browser_first_p.find_elements_by_xpath('//*[@id="cns_Tab22"]')[0].click()
@@ -360,24 +411,42 @@ def Enterprise_Status(code):
 
     htmlFPE = htmlFPEb1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyFPE = htmlFPE.find('tbody')
-    trFPE = tbodyFPE.find_all('tr')[25]
-    tdFPE = trFPE.find_all('td')
 
-    FEPS = []
-    for i in range(4, 8):  # FEPS 값 입력
-        FEPS.append(tdFPE[i].text)
+    try:
+        # EPS 찾기
+        for i in range(0, 34):
+            if tbodyFPE.find_all('th')[i].text == 'EPS(원)':
+                cFPE = tbodyFPE('th')[i]
+                break
+            else:
+                cFPE = None
 
-    for i in range(len(FEPS)):  # FEPS 값 ,제거
-        FEPS[i] = FEPS[i].replace(',', '')
+    except:
+        FPE = 0
+        print('error')
 
-    for i in range(len(FEPS)):  # FEPS 공백 제거
-        if FEPS[i] == '':
-            FEPS[i] = '0'
+    if cFPE != None:
+        trFPE = cFPE.parent
+        tdFPE = trFPE.find_all('td')
 
-    intFEPS = list(map(int, FEPS))
-    SumFEPS = sum(intFEPS)
-    FPE = int(Price) / SumFEPS
-    FPE = round(FPE, 2)
+        FEPS = []
+        for i in range(4, 8):  # FEPS 값 입력
+            FEPS.append(tdFPE[i].text)
+
+        for i in range(len(FEPS)):  # FEPS 값 ,제거
+            FEPS[i] = FEPS[i].replace(',', '')
+
+        for i in range(len(FEPS)):  # FEPS 공백 제거
+            if FEPS[i] == '':
+                FEPS[i] = '0'
+
+        intFEPS = list(map(int, FEPS))
+        SumFEPS = sum(intFEPS)
+        if SumFEPS != 0:
+            FPE = int(Price) / SumFEPS
+            FPE = round(FPE, 2)
+        else:
+            FPE = 0
 
     # EPS growth this year 올해 EPS성장률 최근 4분기
     browser_first_p.find_elements_by_xpath('//*[@id="cns_Tab22"]')[0].click()
@@ -388,29 +457,44 @@ def Enterprise_Status(code):
 
     htmlEPSGT = htmlEPSGTb1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyEPSGT = htmlEPSGT.find('tbody')
-    trEPSGT = tbodyEPSGT.find_all('tr')[25]
-    tdEPSGT = trEPSGT.find_all('td')
 
-    EPSGT = []
-    EPSGT.append(tdEPSGT[0].text)  # EPS 값 입력
-    EPSGT.append(tdEPSGT[4].text)  # EPS 값 입력
+    try:
+        # EPS 찾기
+        for i in range(0, 34):
+            if tbodyEPSGT.find_all('th')[i].text == 'EPS(원)':
+                cEPSGT = tbodyEPSGT('th')[i]
+                break
+            else:
+                cEPSGT = None
 
-    for i in range(len(EPSGT)):  # EPS 값 ,제거
-        EPSGT[i] = EPSGT[i].replace(',', '')
-
-    for i in range(len(EPSGT)):  # 공백 제거
-        if EPSGT[i] == '':
-            EPSGT[i] = '0'
-
-    intEPSGT = list(map(int, EPSGT))
-
-    if intEPSGT[0] != 0:
-        divEPSGT = intEPSGT[1] / intEPSGT[0]
-        divEPSGT = divEPSGT - 1
-        EPSGrowthT = divEPSGT * 100
-        EPSGrowthT = round(EPSGrowthT, 2)
-    else:
+    except:
         EPSGrowthT = 0
+        print('error')
+
+    if cEPSGT != None:
+        trEPSGT = cEPSGT.parent
+        tdEPSGT = trEPSGT.find_all('td')
+
+        EPSGT = []
+        EPSGT.append(tdEPSGT[0].text)  # EPS 값 입력
+        EPSGT.append(tdEPSGT[4].text)  # EPS 값 입력
+
+        for i in range(len(EPSGT)):  # EPS 값 ,제거
+            EPSGT[i] = EPSGT[i].replace(',', '')
+
+        for i in range(len(EPSGT)):  # 공백 제거
+            if EPSGT[i] == '':
+                EPSGT[i] = '0'
+
+        intEPSGT = list(map(int, EPSGT))
+
+        if intEPSGT[0] != 0:
+            divEPSGT = intEPSGT[1] / intEPSGT[0]
+            divEPSGT = divEPSGT - 1
+            EPSGrowthT = divEPSGT * 100
+            EPSGrowthT = round(EPSGrowthT, 2)
+        else:
+            EPSGrowthT = 0
 
     # PEG 주가이익성장률 최근 4분기
     if EPSGrowthT != 0:
@@ -428,25 +512,41 @@ def Enterprise_Status(code):
 
     htmlPS = htmlPSb1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyPS = htmlPS.find('tbody')
-    trPS = tbodyPS.find_all('tr')[0]
-    tdPS = trPS.find_all('td')
 
-    Sale = []
-    for i in range(1, 5):  # EPS 값 입력
-        Sale.append(tdPS[i].text)
 
-    for i in range(len(Sale)):  # EPS 값 ,제거
-        Sale[i] = Sale[i].replace(',', '')
+    try:
+        # 매출액 찾기
+        for i in range(0, 34):
+            if tbodyPS.find_all('th')[i].text == '매출액':
+                cPS = tbodyPS('th')[i]
+                break
+            else:
+                cPS = None
 
-    for i in range(len(Sale)):  # 공백 제거
-        if Sale[i] == '':
-            Sale[i] = '0'
+    except:
+        PS = 0
+        print('error')
 
-    intSale = list(map(int, Sale))
-    Sales = sum(intSale)
+    if cPS != None:
+        trPS = cPS.parent
+        tdPS = trPS.find_all('td')
 
-    PS = int(MarketCap) / Sales
-    PS = round(PS, 2)
+        Sale = []
+        for i in range(1, 5):  # EPS 값 입력
+            Sale.append(tdPS[i].text)
+
+        for i in range(len(Sale)):  # EPS 값 ,제거
+            Sale[i] = Sale[i].replace(',', '')
+
+        for i in range(len(Sale)):  # 공백 제거
+            if Sale[i] == '':
+                Sale[i] = '0'
+
+        intSale = list(map(int, Sale))
+        Sales = sum(intSale)
+
+        PS = int(MarketCap) / Sales
+        PS = round(PS, 2)
 
     # P/B 주가순자산비율 최근 분기
     browser_first_p.find_elements_by_xpath('//*[@id="cns_Tab22"]')[0].click()
@@ -457,16 +557,31 @@ def Enterprise_Status(code):
 
     htmlBP = htmlPBb1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyBP = htmlBP.find('tbody')
-    trBP = tbodyBP.find_all('tr')[27]
-    tdBP = trBP.find_all('td')
 
-    BPS0 = 0
-    BPS0 = tdBP[4].text  # 값 입력
-    BPS0 = BPS0.replace(',', '')
-    BP = int(BPS0)
+    try:
+        # P/B 찾기
+        for i in range(0, 34):
+            if tbodyBP.find_all('th')[i].text == 'BPS(원)':
+                cBP = tbodyBP('th')[i]
+                break
+            else:
+                cBP = None
 
-    PB = Price / BP  # PBR
-    PB = round(PB, 2)
+    except:
+        cBP = 0
+        print('error')
+
+    if cBP != None:
+        trBP = cBP.parent
+        tdBP = trBP.find_all('td')
+
+        BPS0 = 0
+        BPS0 = tdBP[4].text  # 값 입력
+        BPS0 = BPS0.replace(',', '')
+        BP = int(BPS0)
+
+        PB = Price / BP  # PBR
+        PB = round(PB, 2)
 
     # P/FC 자유현금흐름비율 최근 4분기
     browser_first_p.find_elements_by_xpath('//*[@id="cns_Tab22"]')[0].click()
@@ -477,28 +592,43 @@ def Enterprise_Status(code):
 
     htmlFCF = htmlPFCb1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyFCF = htmlFCF.find('tbody')
-    trFCF = tbodyFCF.find_all('tr')[17]
-    tdFCF = trFCF.find_all('td')
 
-    FCF0 = []
-    for i in range(1, 5):  # EPS 값 입력
-        FCF0.append(tdFCF[i].text)
+    try:
+        # FCF 찾기
+        for i in range(0, 34):
+            if tbodyFCF.find_all('th')[i].text == 'FCF':
+                cFCF = tbodyFCF('th')[i]
+                break
+            else:
+                cFCF = None
 
-    for i in range(len(FCF0)):  # EPS 값 ,제거
-        FCF0[i] = FCF0[i].replace(',', '')
+    except:
+        PCF = 0
+        print('error')
 
-    for i in range(len(FCF0)):  # 공백 제거
-        if FCF0[i] == '':
-            FCF0[i] = '0'
+    if cFCF != None:
+        trFCF = cFCF.parent
+        tdFCF = trFCF.find_all('td')
 
-    intFCF = list(map(int, FCF0))
-    FCF = sum(intFCF)
+        FCF0 = []
+        for i in range(1, 5):  # EPS 값 입력
+            FCF0.append(tdFCF[i].text)
 
-    if FCF != 0:
-        PFC = Price / FCF
-        PFC = round(PFC, 2)
-    else:
-        PFC = 0
+        for i in range(len(FCF0)):  # EPS 값 ,제거
+            FCF0[i] = FCF0[i].replace(',', '')
+
+        for i in range(len(FCF0)):  # 공백 제거
+            if FCF0[i] == '':
+                FCF0[i] = '0'
+
+        intFCF = list(map(int, FCF0))
+        FCF = sum(intFCF)
+
+        if FCF != 0:
+            PFC = Price / FCF
+            PFC = round(PFC, 2)
+        else:
+            PFC = 0
 
     # ROA 총자산이익률 최근 분기
     browser_first_p.find_elements_by_xpath('//*[@id="cns_Tab22"]')[0].click()
@@ -509,22 +639,37 @@ def Enterprise_Status(code):
 
     htmlROA = htmlROAb1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyROA = htmlROA.find('tbody')
-    trROA = tbodyROA.find_all('tr')[22]
-    tdROA = trROA.find_all('td')
 
-    ROA0 = []
-    ROA0.append(tdROA[4].text)
+    try:
+        # ROA 찾기
+        for i in range(0, 34):
+            if tbodyROA.find_all('th')[i].text == 'ROA(%)':
+                cROA = tbodyROA('th')[i]
+                break
+            else:
+                cROA = None
 
-    for i in range(len(ROA0)):  # EPS 값 ,제거
-        ROA0[i] = ROA0[i].replace(',', '')
+    except:
+        ROA = 0
+        print('error')
 
-    for i in range(len(ROA0)):  # 공백 제거
-        if ROA0[i] == '':
-            ROA0[i] = '0'
+    if cROA != None:
+        trROA = cROA.parent
+        tdROA = trROA.find_all('td')
 
-    intROA = list(map(str, ROA0))
+        ROA0 = []
+        ROA0.append(tdROA[4].text)
 
-    ROA = ''.join(intROA)
+        for i in range(len(ROA0)):  # EPS 값 ,제거
+            ROA0[i] = ROA0[i].replace(',', '')
+
+        for i in range(len(ROA0)):  # 공백 제거
+            if ROA0[i] == '':
+                ROA0[i] = '0'
+
+        intROA = list(map(str, ROA0))
+
+        ROA = ''.join(intROA)
 
     # ROE 자기자본이익률 최근 분기
     browser_first_p.find_elements_by_xpath('//*[@id="cns_Tab22"]')[0].click()
@@ -535,22 +680,37 @@ def Enterprise_Status(code):
 
     htmlROE = htmlROEb1.find('table', {'class': 'gHead01 all-width', 'summary': '주요재무정보를 제공합니다.'})
     tbodyROE = htmlROE.find('tbody')
-    trROE = tbodyROE.find_all('tr')[21]
-    tdROE = trROE.find_all('td')
 
-    ROE0 = []
-    ROE0.append(tdROE[4].text)
+    try:
+        # ROE 찾기
+        for i in range(0, 34):
+            if tbodyROE.find_all('th')[i].text == 'ROE(%)':
+                cROE = tbodyROE('th')[i]
+                break
+            else:
+                cROE = None
 
-    for i in range(len(ROE0)):  # EPS 값 ,제거
-        ROE0[i] = ROE0[i].replace(',', '')
+    except:
+        ROE = 0
+        print('error')
 
-    for i in range(len(ROE0)):  # 공백 제거
-        if ROE0[i] == '':
-            ROE0[i] = '0'
+    if cROE != None:
+        trROE = cROE.parent
+        tdROE = trROE.find_all('td')
 
-    intROE = list(map(str, ROE0))
+        ROE0 = []
+        ROE0.append(tdROE[4].text)
 
-    ROE = ''.join(intROE)
+        for i in range(len(ROE0)):  # EPS 값 ,제거
+            ROE0[i] = ROE0[i].replace(',', '')
+
+        for i in range(len(ROE0)):  # 공백 제거
+            if ROE0[i] == '':
+                ROE0[i] = '0'
+
+        intROE = list(map(str, ROE0))
+
+        ROE = ''.join(intROE)
 
 
     return DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,\
@@ -558,14 +718,35 @@ def Enterprise_Status(code):
            EPSGrowthN5,SalesGrowthP5,PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,\
            ROA,ROE
 
-code = "000020"
 
-DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,\
-EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5,PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,\
-ROA,ROE = Enterprise_Status(code)
+try:
 
-# print(DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price)
-# print(EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5)
-# print(PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,ROA,ROE)
+    for code in ticker:
+        DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,\
+        EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5,PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,\
+        ROA,ROE = Enterprise_Status(code)
+
+        print(code,DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price)
+        print(EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5)
+        print(PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,ROA,ROE)
+except Exception as e:
+    browser_first_p.quit()
+    print(traceback.format_exc())
+    print(e)
+
+# code = "002760"
+# try:
+#     DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price, \
+#     EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, \
+#     ROA, ROE = Enterprise_Status(code)
+#
+#     print(code, DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price)
+#     print(EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5)
+#     print(PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, ROA, ROE)
+#
+# except Exception as e:
+#     browser_first_p.quit()
+#     print(traceback.format_exc())
+#     print(e)
 
 browser_first_p.quit()
