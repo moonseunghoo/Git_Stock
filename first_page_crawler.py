@@ -210,10 +210,13 @@ def Enterprise_Status(code):
                 EPSGN[i] = '0'
 
         intEPSGN = list(map(int, EPSGN))
-        divEPSGN = intEPSGN[1] / intEPSGN[0]
-        divEPSGN = divEPSGN - 1
-        EPSGrowthN = divEPSGN * 100
-        EPSGrowthN = round(EPSGrowthN, 2)
+        if intEPSGN[0] != 0:
+            divEPSGN = intEPSGN[1] / intEPSGN[0]
+            divEPSGN = divEPSGN - 1
+            EPSGrowthN = divEPSGN * 100
+            EPSGrowthN = round(EPSGrowthN, 2)
+        else:
+            EPSGrowthN = 0
 
     # EPS growth past 5 year 지난 5년 EPS성장률 최근,과거
     browser_first_p.find_element_by_xpath('//*[@id="cns_Tab21"]').click()
@@ -254,10 +257,13 @@ def Enterprise_Status(code):
                 EPSGP5[i] = '0'
 
         intEPSGP5 = list(map(int, EPSGP5))
-        divEPSGP5 = intEPSGP5[1] / intEPSGP5[0]
-        divEPSGP5 = divEPSGP5 - 1
-        EPSGrowthP5 = divEPSGP5 * 100
-        EPSGrowthP5 = round(EPSGrowthP5, 2)
+        if intEPSGP5[0] != 0:
+            divEPSGP5 = intEPSGP5[1] / intEPSGP5[0]
+            divEPSGP5 = divEPSGP5 - 1
+            EPSGrowthP5 = divEPSGP5 * 100
+            EPSGrowthP5 = round(EPSGrowthP5, 2)
+        else:
+            EPSGrowthP5 = 0
 
     # EPS growth next 5 years 향후 5년 EPS성장률 최근,미래
     browser_first_p.find_element_by_xpath('//*[@id="cns_Tab21"]').click()
@@ -399,8 +405,11 @@ def Enterprise_Status(code):
 
         intEPS = list(map(int, EPS0))
         EPS = sum(intEPS)
-        PE = Price / EPS
-        PE = round(PE, 2)
+        if EPS != 0:
+            PE = Price / EPS
+            PE = round(PE, 2)
+        else:
+            PE = 0
 
     # Forward P/E 예상주가수익률 최근,미래 4분기
     browser_first_p.find_elements_by_xpath('//*[@id="cns_Tab22"]')[0].click()
@@ -545,8 +554,11 @@ def Enterprise_Status(code):
         intSale = list(map(int, Sale))
         Sales = sum(intSale)
 
-        PS = int(MarketCap) / Sales
-        PS = round(PS, 2)
+        if Sales != 0:
+            PS = int(MarketCap) / Sales
+            PS = round(PS, 2)
+        else:
+            PS = 0
 
     # P/B 주가순자산비율 최근 분기
     browser_first_p.find_elements_by_xpath('//*[@id="cns_Tab22"]')[0].click()
@@ -578,10 +590,19 @@ def Enterprise_Status(code):
         BPS0 = 0
         BPS0 = tdBP[4].text  # 값 입력
         BPS0 = BPS0.replace(',', '')
+
+        BPS0 = BPS0.replace(',','')
+
+        if BPS0 == '':
+            BPS0 = '0'
         BP = int(BPS0)
 
-        PB = Price / BP  # PBR
-        PB = round(PB, 2)
+        if BP != 0:
+            PB = Price / BP  # PBR
+            PB = round(PB, 2)
+        else:
+            BP = 0
+            PB = 0
 
     # P/FC 자유현금흐름비율 최근 4분기
     browser_first_p.find_elements_by_xpath('//*[@id="cns_Tab22"]')[0].click()
@@ -720,7 +741,6 @@ def Enterprise_Status(code):
 
 
 try:
-
     for code in ticker:
         DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,\
         EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5,PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,\
@@ -734,7 +754,7 @@ except Exception as e:
     print(traceback.format_exc())
     print(e)
 
-# code = "002760"
+# code = "036260"
 # try:
 #     DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price, \
 #     EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, \
