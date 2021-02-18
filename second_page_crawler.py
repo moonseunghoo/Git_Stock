@@ -42,12 +42,6 @@ def Enterprise_Overview(code):
 
     return IPODate
 
-
-
-
-
-
-
 try:
     for code in ticker:
         IPODate = Enterprise_Overview(code)
