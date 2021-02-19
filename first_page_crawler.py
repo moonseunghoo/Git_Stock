@@ -725,33 +725,33 @@ def Enterprise_Status(code):
            ROA,ROE
 
 
-try:
-    for code in ticker:
-        DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,\
-        EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5,PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,\
-        ROA,ROE = Enterprise_Status(code)
-
-        print(code,DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price)
-        print(EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5)
-        print(PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,ROA,ROE)
-except Exception as e:
-    browser_first_p.quit()
-    print(traceback.format_exc())
-    print(e)
-
-# code = "036260"
 # try:
-#     DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price, \
-#     EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, \
-#     ROA, ROE = Enterprise_Status(code)
+#     for code in ticker:
+#         DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,\
+#         EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5,PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,\
+#         ROA,ROE = Enterprise_Status(code)
 #
-#     print(code, DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price)
-#     print(EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5)
-#     print(PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, ROA, ROE)
-#
+#         # print(code,DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price)
+#         # print(EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5)
+#         # print(PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,ROA,ROE)
 # except Exception as e:
 #     browser_first_p.quit()
 #     print(traceback.format_exc())
 #     print(e)
+
+code = "000020"
+try:
+    DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price, \
+    EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, \
+    ROA, ROE = Enterprise_Status(code)
+
+    print(code, DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price)
+    print(EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5)
+    print(PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, ROA, ROE)
+
+except Exception as e:
+    browser_first_p.quit()
+    print(traceback.format_exc())
+    print(e)
 
 browser_first_p.quit()
