@@ -369,18 +369,18 @@ def Investment_Indicators(code):
 # browser_fourth_p.quit()
 # print(time.time()-start)
 
-# code = '000020'
-#
-# try:
-#     Price = Price(code)
-#     PC,OM,NPM,PR,CR,QR,DE = Investment_Indicators(code)
-#     print(code)
-#     print(PC,OM,NPM,PR,CR,QR,DE)
-#
-# except Exception as e:
-#     browser_fourth_p.quit()
-#     print(traceback.format_exc())
-#     print(e)
-#
-# browser_fourth_p.quit()
-# print(time.time()-start)
+code = '047810'
+
+try:
+    Price = Price_a(code)
+    PC,OM,NPM,PR,CR,QR,DE = Investment_Indicators(code)
+    print(code)
+    print(PC,OM,NPM,PR,CR,QR,DE)
+
+except Exception as e:
+    browser_fourth_p.quit()
+    print(traceback.format_exc())
+    print(e)
+
+browser_fourth_p.quit()
+print(time.time()-start)
