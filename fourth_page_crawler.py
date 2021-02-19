@@ -2,7 +2,6 @@ import time # 사이트를 불러올 때, 작업 지연시간을 지정해주기
 import traceback
 from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지, 더 간단히 얻을 수 있다는 장점이 있다고 한다.
 from selenium import webdriver
-from first_page_crawler import Price
 from ticker_name_crawler import ticker
 
 start = time.time()
@@ -13,8 +12,42 @@ options.add_argument('window-size=1920x1080')
 options.add_argument('disable-gpu')
 
 browser_fourth_p = webdriver.Chrome(options=options)
+browser_price = webdriver.Chrome(options=options)
 
 delay = 5
+
+def Price_a(code):
+    name = code
+    base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
+
+    browser_price.get(base_url)
+
+    # Price 가격
+    browser_price.switch_to.frame(browser_price.find_element_by_id('coinfo_cp'))
+    browser_price.implicitly_wait(delay)
+    browser_price.find_elements_by_xpath('//*[@id="header-menu"]/div[1]/dl/dt[1]')[0].click()
+    browser_price.implicitly_wait(delay)
+
+    htmlP = browser_price.page_source  # 지금 현 상태의 page source불러오기
+    htmlP1 = BeautifulSoup(htmlP, 'html.parser')
+
+    htmlAMP = htmlP1.find('table', {'class': 'gHead', 'summary': '기업의 기본적인 시세정보'
+                   '(주가/전일대비/수익률,52주최고/최저,액면가,거래량/거래대금,시가총액,유동주식비율,'
+                   '외국인지분율,52주베타,수익률(1M/3M/6M/1Y))를 제공합니다.'})
+
+    tbodyP = htmlAMP.find('tbody')
+    trP = tbodyP.find_all('tr')[0]
+    tdP = trP.find('td')
+
+    tdP = str(tdP)
+    tdP = tdP.split('/')
+    tdP[1:] = ''
+    tdP = str(tdP)
+    tdP1 = tdP[58:-3]
+    Price = tdP1.replace(',', '')
+    Price = int(Price)
+
+    return Price
 
 def Investment_Indicators(code):
 
@@ -81,7 +114,7 @@ def Investment_Indicators(code):
     browser_fourth_p.implicitly_wait(delay)
     browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
     browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.5)
+    time.sleep(0.1)
 
     htmlOMb = browser_fourth_p.page_source
     htmlOMb1 = BeautifulSoup(htmlOMb, 'html.parser')
@@ -123,7 +156,7 @@ def Investment_Indicators(code):
     browser_fourth_p.implicitly_wait(delay)
     browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
     browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.5)
+    time.sleep(0.1)
 
     htmlNPMb = browser_fourth_p.page_source
     htmlNPMb1 = BeautifulSoup(htmlNPMb, 'html.parser')
@@ -161,7 +194,7 @@ def Investment_Indicators(code):
     browser_fourth_p.implicitly_wait(delay)
     browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun2"]').click()
     browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.2)
+    time.sleep(0.1)
 
     htmlPRb = browser_fourth_p.page_source
     htmlPRb1 = BeautifulSoup(htmlPRb, 'html.parser')
@@ -201,7 +234,7 @@ def Investment_Indicators(code):
     browser_fourth_p.implicitly_wait(delay)
     browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
     browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.5)
+    time.sleep(0.1)
 
     htmlCRb = browser_fourth_p.page_source
     htmlCRb1 = BeautifulSoup(htmlCRb, 'html.parser')
@@ -242,7 +275,7 @@ def Investment_Indicators(code):
     browser_fourth_p.implicitly_wait(delay)
     browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
     browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.5)
+    time.sleep(0.1)
 
     htmlQRb = browser_fourth_p.page_source
     htmlQRb1 = BeautifulSoup(htmlQRb, 'html.parser')
@@ -282,7 +315,7 @@ def Investment_Indicators(code):
     browser_fourth_p.implicitly_wait(delay)
     browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
     browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.5)
+    time.sleep(0.1)
 
     htmlDEb = browser_fourth_p.page_source
     htmlDEb1 = BeautifulSoup(htmlDEb, 'html.parser')
@@ -323,6 +356,7 @@ def Investment_Indicators(code):
 
 # try:
 #     for code in ticker:
+#         Price = Price_a(code)
 #         PC,OM,NPM,PR,CR,QR,DE = Investment_Indicators(code)
 #         print(code)
 #         print(PC,OM,NPM,PR,CR,QR,DE)
@@ -333,18 +367,20 @@ def Investment_Indicators(code):
 #     print(e)
 #
 # browser_fourth_p.quit()
+# print(time.time()-start)
 
-code = '000020'
-
-try:
-
-    PC,OM,NPM,PR,CR,QR,DE = Investment_Indicators(code)
-    print(code)
-    print(PC,OM,NPM,PR,CR,QR,DE)
-
-except Exception as e:
-    browser_fourth_p.quit()
-    print(traceback.format_exc())
-    print(e)
-
-browser_fourth_p.quit()
+# code = '000020'
+#
+# try:
+#     Price = Price(code)
+#     PC,OM,NPM,PR,CR,QR,DE = Investment_Indicators(code)
+#     print(code)
+#     print(PC,OM,NPM,PR,CR,QR,DE)
+#
+# except Exception as e:
+#     browser_fourth_p.quit()
+#     print(traceback.format_exc())
+#     print(e)
+#
+# browser_fourth_p.quit()
+# print(time.time()-start)
