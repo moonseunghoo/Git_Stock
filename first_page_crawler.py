@@ -739,7 +739,7 @@ def Enterprise_Status(code):
 #     print(traceback.format_exc())
 #     print(e)
 
-code = "000020"
+code = "047810"
 try:
     DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price, \
     EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, \
