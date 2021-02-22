@@ -4,17 +4,16 @@ from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지,
 from selenium import webdriver
 from ticker_name_crawler import ticker
 
-options = webdriver.ChromeOptions()
-options.add_argument('headless')
-options.add_argument('window-size=1920x1080')
-options.add_argument('disable-gpu')
-
-browser_first_p = webdriver.Chrome(options=options)
-
 delay = 5
 
 #네이버 금융 기업현황
 def Enterprise_Status(code):
+    options = webdriver.ChromeOptions()
+    options.add_argument('headless')
+    options.add_argument('window-size=1920x1080')
+    options.add_argument('disable-gpu')
+
+    browser_first_p = webdriver.Chrome(options=options)
 
     name = code
     base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
@@ -725,33 +724,33 @@ def Enterprise_Status(code):
            ROA,ROE
 
 
-# try:
-#     for code in ticker:
-#         DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,\
-#         EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5,PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,\
-#         ROA,ROE = Enterprise_Status(code)
+# # try:
+# #     for code in ticker:
+# #         DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,\
+# #         EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5,PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,\
+# #         ROA,ROE = Enterprise_Status(code)
+# #
+# #         # print(code,DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price)
+# #         # print(EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5)
+# #         # print(PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,ROA,ROE)
+# # except Exception as e:
+# #     browser_first_p.quit()
+# #     print(traceback.format_exc())
+# #     print(e)
 #
-#         # print(code,DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price)
-#         # print(EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5)
-#         # print(PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,ROA,ROE)
+# code = "047810"
+# try:
+#     DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price, \
+#     EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, \
+#     ROA, ROE = Enterprise_Status(code)
+#
+#     print(code, DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price)
+#     print(EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5)
+#     print(PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, ROA, ROE)
+#
 # except Exception as e:
 #     browser_first_p.quit()
 #     print(traceback.format_exc())
 #     print(e)
-
-code = "047810"
-try:
-    DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price, \
-    EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, \
-    ROA, ROE = Enterprise_Status(code)
-
-    print(code, DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price)
-    print(EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5)
-    print(PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, ROA, ROE)
-
-except Exception as e:
-    browser_first_p.quit()
-    print(traceback.format_exc())
-    print(e)
-
-browser_first_p.quit()
+#
+# browser_first_p.quit()

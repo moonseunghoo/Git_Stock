@@ -4,19 +4,17 @@ from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지,
 from selenium import webdriver
 from ticker_name_crawler import ticker
 
-start = time.time()
-
-options = webdriver.ChromeOptions()
-options.add_argument('headless')
-options.add_argument('window-size=1920x1080')
-options.add_argument('disable-gpu')
-
-browser_fourth_p = webdriver.Chrome(options=options)
-browser_price = webdriver.Chrome(options=options)
-
 delay = 5
 
 def Price_a(code):
+    options = webdriver.ChromeOptions()
+    options.add_argument('headless')
+    options.add_argument('window-size=1920x1080')
+    options.add_argument('disable-gpu')
+
+    browser_fourth_p = webdriver.Chrome(options=options)
+    browser_price = webdriver.Chrome(options=options)
+
     name = code
     base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
 
@@ -369,18 +367,18 @@ def Investment_Indicators(code):
 # browser_fourth_p.quit()
 # print(time.time()-start)
 
-code = '047810'
-
-try:
-    Price = Price_a(code)
-    PC,OM,NPM,PR,CR,QR,DE = Investment_Indicators(code)
-    print(code)
-    print(PC,OM,NPM,PR,CR,QR,DE)
-
-except Exception as e:
-    browser_fourth_p.quit()
-    print(traceback.format_exc())
-    print(e)
-
-browser_fourth_p.quit()
-print(time.time()-start)
+# code = '047810'
+#
+# try:
+#     Price = Price_a(code)
+#     PC,OM,NPM,PR,CR,QR,DE = Investment_Indicators(code)
+#     print(code)
+#     print(PC,OM,NPM,PR,CR,QR,DE)
+#
+# except Exception as e:
+#     browser_fourth_p.quit()
+#     print(traceback.format_exc())
+#     print(e)
+#
+# browser_fourth_p.quit()
+# print(time.time()-start)

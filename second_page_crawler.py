@@ -4,17 +4,17 @@ from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지,
 from selenium import webdriver
 from ticker_name_crawler import ticker
 
-options = webdriver.ChromeOptions()
-options.add_argument('headless')
-options.add_argument('window-size=1920x1080')
-options.add_argument('disable-gpu')
-
-browser_second_p = webdriver.Chrome(options=options)
-
 delay = 5
 
 #네이버 금융 기업 개요
 def Enterprise_Overview(code):
+    options = webdriver.ChromeOptions()
+    options.add_argument('headless')
+    options.add_argument('window-size=1920x1080')
+    options.add_argument('disable-gpu')
+
+    browser_second_p = webdriver.Chrome(options=options)
+
     name = code
     base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
 
@@ -40,17 +40,18 @@ def Enterprise_Overview(code):
     tdIPO = '/'.join(tdIPO)
     IPODate = tdIPO
 
-    return IPODate
-
-try:
-    for code in ticker:
-        IPODate = Enterprise_Overview(code)
-        print(code)
-        print(IPODate)
-except Exception as e:
     browser_second_p.quit()
-    print(traceback.format_exc())
-    print(e)
+
+    return IPODate
+# try:
+#     for code in ticker:
+#         IPODate = Enterprise_Overview(code)
+#         print(code)
+#         print(IPODate)
+# except Exception as e:
+#     browser_second_p.quit()
+#     print(traceback.format_exc())
+#     print(e)
 
 # code = "000020"
 # try:
@@ -61,5 +62,5 @@ except Exception as e:
 #     browser_second_p.quit()
 #     print(traceback.format_exc())
 #     print(e)
-
-browser_second_p.quit()
+#
+# browser_second_p.quit()

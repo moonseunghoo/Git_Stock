@@ -4,18 +4,16 @@ from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지,
 from selenium import webdriver
 from ticker_name_crawler import ticker
 
-start = time.time()
-
-options = webdriver.ChromeOptions()
-options.add_argument('headless')
-options.add_argument('window-size=1920x1080')
-options.add_argument('disable-gpu')
-
-browser_thrid_p = webdriver.Chrome(options=options)
-
 delay = 5
 
 def Financial_Analysis(code):
+    options = webdriver.ChromeOptions()
+    options.add_argument('headless')
+    options.add_argument('window-size=1920x1080')
+    options.add_argument('disable-gpu')
+
+    browser_thrid_p = webdriver.Chrome(options=options)
+
     name = code
     global GM
     base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
@@ -68,20 +66,20 @@ def Financial_Analysis(code):
 
     return GM
 
-try:
-    for code in ticker:
-        GM = Financial_Analysis(code)
-        print(code)
-        print(GM)
-
-except Exception as e:
-    browser_thrid_p.quit()
-    print(traceback.format_exc())
-    print(e)
-
-browser_thrid_p.quit()
-
-print(time.time()-start)
+# try:
+#     for code in ticker:
+#         GM = Financial_Analysis(code)
+#         print(code)
+#         print(GM)
+#
+# except Exception as e:
+#     browser_thrid_p.quit()
+#     print(traceback.format_exc())
+#     print(e)
+#
+# browser_thrid_p.quit()
+#
+# print(time.time()-start)
 
 # code = "008060"
 # try:
