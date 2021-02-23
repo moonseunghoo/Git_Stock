@@ -8,5 +8,3 @@ def All_stock():
 
     return ticker,ticker_name
 
-ticker,ticker_name = All_stock()
-print(ticker)

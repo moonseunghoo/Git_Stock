@@ -2,7 +2,7 @@ import time # 사이트를 불러올 때, 작업 지연시간을 지정해주기
 import traceback
 from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지, 더 간단히 얻을 수 있다는 장점이 있다고 한다.
 from selenium import webdriver
-from ticker_name_crawler import ticker
+
 
 delay = 5
 
@@ -12,7 +12,6 @@ def Price_a(code):
     options.add_argument('window-size=1920x1080')
     options.add_argument('disable-gpu')
 
-    browser_fourth_p = webdriver.Chrome(options=options)
     browser_price = webdriver.Chrome(options=options)
 
     name = code
@@ -47,310 +46,335 @@ def Price_a(code):
 
     return Price
 
-def Investment_Indicators(code):
+def Investment_Indicators(id,code,result4):
+    Price = Price_a(code)
+    try:
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        options.add_argument('window-size=1920x1080')
+        options.add_argument('disable-gpu')
 
-    name = code
-    base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
+        browser_fourth_p = webdriver.Chrome(options=options)
 
-    browser_fourth_p.get(base_url)
+        name = code
+        base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
 
-    # frame구조 안으로 들어가기
-    browser_fourth_p.switch_to.frame(browser_fourth_p.find_element_by_id('coinfo_cp'))
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_elements_by_xpath('//*[@class="wrapper-menu"]/dl/dt[4]')[0].click()
-    browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.get(base_url)
 
-    html0 = browser_fourth_p.page_source
-    html1 = BeautifulSoup(html0,'html.parser')
+        # frame구조 안으로 들어가기
+        browser_fourth_p.switch_to.frame(browser_fourth_p.find_element_by_id('coinfo_cp'))
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_elements_by_xpath('//*[@class="wrapper-menu"]/dl/dt[4]')[0].click()
+        browser_fourth_p.implicitly_wait(delay)
 
-    #P/C 주가현금흐름비율 최근 4분기
-    browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1_2"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun2"]').click()
-    browser_fourth_p.implicitly_wait(delay)
+        html0 = browser_fourth_p.page_source
+        html1 = BeautifulSoup(html0,'html.parser')
 
-    htmlPCb = browser_fourth_p.page_source
-    htmlPCb1 = BeautifulSoup(htmlPCb, 'html.parser')
+        #P/C 주가현금흐름비율 최근 4분기
+        browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1_2"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun2"]').click()
+        browser_fourth_p.implicitly_wait(delay)
 
-    # htmlCPS = htmlPCb1.find('table', {'class': 'gHead01 all-width data-list',
-    #                                   'summary': 'IFRS연결 분기 투자분석 정보를 제공합니다.'})
+        htmlPCb = browser_fourth_p.page_source
+        htmlPCb1 = BeautifulSoup(htmlPCb, 'html.parser')
 
-    htmlCPS = htmlPCb1.find_all('table', {'class': 'gHead01 all-width data-list'})[1]
-    tbodyCPS = htmlCPS.find('tbody')
+        # htmlCPS = htmlPCb1.find('table', {'class': 'gHead01 all-width data-list',
+        #                                   'summary': 'IFRS연결 분기 투자분석 정보를 제공합니다.'})
 
-    try:  # CPS 찾기
-        cCPS = tbodyCPS.find('td', {'class': 'txt', 'title': 'CPS'})
+        htmlCPS = htmlPCb1.find_all('table', {'class': 'gHead01 all-width data-list'})[1]
+        tbodyCPS = htmlCPS.find('tbody')
 
-    except:
-        CPS = 0
+        try:  # CPS 찾기
+            cCPS = tbodyCPS.find('td', {'class': 'txt', 'title': 'CPS'})
 
-    if cCPS != None:  # CPS을 찾으면
-        trCPS = cCPS.parent
-        tdCPS = trCPS.find_all('td')
+        except:
+            CPS = 0
 
-        CPS0 = []
-        for i in range(2, 6):
-            CPS0.append(tdCPS[i].text)
+        if cCPS != None:  # CPS을 찾으면
+            trCPS = cCPS.parent
+            tdCPS = trCPS.find_all('td')
 
-        for i in range(len(CPS0)):  # 값 ,제거
-            CPS0[i] = CPS0[i].replace(',', '')
+            CPS0 = []
+            for i in range(2, 6):
+                CPS0.append(tdCPS[i].text)
 
-        for i in range(len(CPS0)):  # 공백 제거
-            if CPS0[i] == '':
-                CPS0[i] = '0'
+            for i in range(len(CPS0)):  # 값 ,제거
+                CPS0[i] = CPS0[i].replace(',', '')
 
-        intCPS = list(map(int, CPS0))
-        CPS = sum(intCPS)  # CPS
+            for i in range(len(CPS0)):  # 공백 제거
+                if CPS0[i] == '':
+                    CPS0[i] = '0'
 
-        PC = Price / CPS
-        PC = round(PC, 2)
+            intCPS = list(map(int, CPS0))
+            CPS = sum(intCPS)  # CPS
 
-    # Operating Margin 영업이익율 최근 분기
-    browser_fourth_p.find_element_by_xpath('//*[@id="val_tab1"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.1)
+            PC = Price / CPS
+            PC = round(PC, 2)
 
-    htmlOMb = browser_fourth_p.page_source
-    htmlOMb1 = BeautifulSoup(htmlOMb, 'html.parser')
+            result4.put(PC)
 
-    # htmlOM = htmlOMb1.find('table', {'class': 'gHead01 all-width data-list',
-    #                                  'summary': 'IFRS연결 분기 투자분석 정보를 제공합니다.'})
+        # Operating Margin 영업이익율 최근 분기
+        browser_fourth_p.find_element_by_xpath('//*[@id="val_tab1"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        time.sleep(0.1)
 
-    htmlOM = htmlOMb1.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
+        htmlOMb = browser_fourth_p.page_source
+        htmlOMb1 = BeautifulSoup(htmlOMb, 'html.parser')
 
-    tbodyOM = htmlOM.find('tbody')
+        # htmlOM = htmlOMb1.find('table', {'class': 'gHead01 all-width data-list',
+        #                                  'summary': 'IFRS연결 분기 투자분석 정보를 제공합니다.'})
 
-    try:  # 영업이익률 찾기
-        cOM = tbodyOM.find('td', {'class': 'txt', 'title': '영업이익률'})
+        htmlOM = htmlOMb1.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
 
-    except:
-        OM = 0
+        tbodyOM = htmlOM.find('tbody')
 
-    if cOM != None:  # 영업이익률을 찾으면
-        trOM = cOM.parent
-        tdOM = trOM.find_all('td')
+        try:  # 영업이익률 찾기
+            cOM = tbodyOM.find('td', {'class': 'txt', 'title': '영업이익률'})
 
-        OM0 = []
-        OM0.append(tdOM[5].text)
+        except:
+            OM = 0
 
-        for i in range(len(OM0)):  # 값 ,제거
-            OM0[i] = OM0[i].replace(',', '')
+        if cOM != None:  # 영업이익률을 찾으면
+            trOM = cOM.parent
+            tdOM = trOM.find_all('td')
 
-        for i in range(len(OM0)):  # 공백 제거
-            if OM0[i] == '':
-                OM0[i] = '0'
+            OM0 = []
+            OM0.append(tdOM[5].text)
 
-        strOM = list(map(str, OM0))
-        OM = ''.join(strOM)
+            for i in range(len(OM0)):  # 값 ,제거
+                OM0[i] = OM0[i].replace(',', '')
 
-    # Net Profit Margin 순이익율 최근 분기
-    browser_fourth_p.find_element_by_xpath('//*[@id="val_tab1"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.1)
+            for i in range(len(OM0)):  # 공백 제거
+                if OM0[i] == '':
+                    OM0[i] = '0'
 
-    htmlNPMb = browser_fourth_p.page_source
-    htmlNPMb1 = BeautifulSoup(htmlNPMb, 'html.parser')
+            strOM = list(map(str, OM0))
+            OM = ''.join(strOM)
 
-    # htmlNPM = htmlNPMb1.find('table', {'class': 'gHead01 all-width data-list',
-    #                                   'summary': 'IFRS연결 분기 투자분석 정보를 제공합니다.'})
-    htmlNPM = htmlNPMb1.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
-    tbodyNPM = htmlNPM.find('tbody')
+            result4.put(OM)
 
-    try:  # 순이익률 찾기
-        cNPM = tbodyNPM.find('td', {'class': 'txt', 'title': '순이익률'})
+        # Net Profit Margin 순이익율 최근 분기
+        browser_fourth_p.find_element_by_xpath('//*[@id="val_tab1"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        time.sleep(0.1)
 
-    except:
-        NPM = 0
+        htmlNPMb = browser_fourth_p.page_source
+        htmlNPMb1 = BeautifulSoup(htmlNPMb, 'html.parser')
 
-    if cNPM != None:  # 순이익률을 찾으면
-        trNPM = cNPM.parent
-        tdNPM = trNPM.find_all('td')
-
-        NPM0 = []
-        NPM0.append(tdNPM[5].text)
-
-        for i in range(len(NPM0)):  # 값 ,제거
-            NPM0[i] = NPM0[i].replace(',', '')
+        # htmlNPM = htmlNPMb1.find('table', {'class': 'gHead01 all-width data-list',
+        #                                   'summary': 'IFRS연결 분기 투자분석 정보를 제공합니다.'})
+        htmlNPM = htmlNPMb1.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
+        tbodyNPM = htmlNPM.find('tbody')
 
-        for i in range(len(NPM0)):  # 공백 제거
-            if NPM0[i] == '':
-                NPM0[i] = '0'
+        try:  # 순이익률 찾기
+            cNPM = tbodyNPM.find('td', {'class': 'txt', 'title': '순이익률'})
 
-        strNPM = list(map(str, NPM0))
-        NPM = ''.join(strNPM)
+        except:
+            NPM = 0
 
-    # Payout Ratio 배당성향 최근 동기
-    browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp0_2"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun2"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.1)
+        if cNPM != None:  # 순이익률을 찾으면
+            trNPM = cNPM.parent
+            tdNPM = trNPM.find_all('td')
 
-    htmlPRb = browser_fourth_p.page_source
-    htmlPRb1 = BeautifulSoup(htmlPRb, 'html.parser')
-    # htmlPR = htmlPRb1.find('table', {'class': 'gHead01 all-width data-list',
-    #                                  'summary': 'IFRS연결 연간 투자분석 정보를 제공합니다.'})
-    htmlPR = htmlPRb1.find_all('table', {'class': 'gHead01 all-width data-list'})[1]
+            NPM0 = []
+            NPM0.append(tdNPM[5].text)
 
-    tbodyPR = htmlPR.find('tbody')
+            for i in range(len(NPM0)):  # 값 ,제거
+                NPM0[i] = NPM0[i].replace(',', '')
 
-    try:  # 배당성향 찾기
-        cPR = tbodyPR.find('td', {'class': 'txt', 'title': '현금배당성향(%)'})
+            for i in range(len(NPM0)):  # 공백 제거
+                if NPM0[i] == '':
+                    NPM0[i] = '0'
 
-    except:
-        PR = 0
+            strNPM = list(map(str, NPM0))
+            NPM = ''.join(strNPM)
 
-    if cPR != None:  # 배당성향을 찾으면
-        trPR = cPR.parent
-        tdPR = trPR.find_all('td')
+            result4.put(NPM)
 
-        PR0 = []
-        PR0.append(tdPR[5].text)
-
-        for i in range(len(PR0)):  # 값 ,제거
-            PR0[i] = PR0[i].replace(',', '')
-
-        for i in range(len(PR0)):  # 공백 제거
-            if PR0[i] == '':
-                PR0[i] = '0'
+        # Payout Ratio 배당성향 최근 동기
+        browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp0_2"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun2"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        time.sleep(0.1)
 
-        strPR = list(map(str, PR0))
-        PR = ''.join(strPR)
+        htmlPRb = browser_fourth_p.page_source
+        htmlPRb1 = BeautifulSoup(htmlPRb, 'html.parser')
+        # htmlPR = htmlPRb1.find('table', {'class': 'gHead01 all-width data-list',
+        #                                  'summary': 'IFRS연결 연간 투자분석 정보를 제공합니다.'})
+        htmlPR = htmlPRb1.find_all('table', {'class': 'gHead01 all-width data-list'})[1]
 
-    # Current Ratio 유동비율 최근 분기
-    browser_fourth_p.find_element_by_xpath('//*[@id="val_tab3"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.1)
+        tbodyPR = htmlPR.find('tbody')
 
-    htmlCRb = browser_fourth_p.page_source
-    htmlCRb1 = BeautifulSoup(htmlCRb, 'html.parser')
+        try:  # 배당성향 찾기
+            cPR = tbodyPR.find('td', {'class': 'txt', 'title': '현금배당성향(%)'})
 
-    htmlCR = htmlCRb1.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
+        except:
+            PR = 0
 
-    tbodyCR = htmlCR.find('tbody')
+        if cPR != None:  # 배당성향을 찾으면
+            trPR = cPR.parent
+            tdPR = trPR.find_all('td')
 
-    try:  # 유동비율 찾기
-        cCR = tbodyCR.find('td', {'class': 'txt', 'title': '유동비율'})
+            PR0 = []
+            PR0.append(tdPR[5].text)
 
-    except:
-        CR = 0
+            for i in range(len(PR0)):  # 값 ,제거
+                PR0[i] = PR0[i].replace(',', '')
 
-    if cCR != None:  # 유동비율을 찾으면
-        trCR = cCR.parent
-        tdCR = trCR.find_all('td')
+            for i in range(len(PR0)):  # 공백 제거
+                if PR0[i] == '':
+                    PR0[i] = '0'
 
-        CR0 = []
-        CR0.append(tdCR[5].text)
+            strPR = list(map(str, PR0))
+            PR = ''.join(strPR)
 
-        for i in range(len(CR0)):  # 값 ,제거
-            CR0[i] = CR0[i].replace(',', '')
+            result4.put(PR)
 
-        for i in range(len(CR0)):  # 공백 제거
-            if CR0[i] == '':
-                CR0[i] = '0'
-            else:
-                break
+        # Current Ratio 유동비율 최근 분기
+        browser_fourth_p.find_element_by_xpath('//*[@id="val_tab3"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        time.sleep(0.1)
 
-        intCR = list(map(str, CR0))
-        CR = ''.join(intCR)
+        htmlCRb = browser_fourth_p.page_source
+        htmlCRb1 = BeautifulSoup(htmlCRb, 'html.parser')
 
-    # Quick Ratio 당좌비율 최근 분기
-    browser_fourth_p.find_element_by_xpath('//*[@id="val_tab3"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.1)
+        htmlCR = htmlCRb1.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
 
-    htmlQRb = browser_fourth_p.page_source
-    htmlQRb1 = BeautifulSoup(htmlQRb, 'html.parser')
+        tbodyCR = htmlCR.find('tbody')
 
-    htmlQR = htmlQRb1.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
-    tbodyQR = htmlQR.find('tbody')
+        try:  # 유동비율 찾기
+            cCR = tbodyCR.find('td', {'class': 'txt', 'title': '유동비율'})
 
-    try:  # 당좌비율 찾기
-        cQR = tbodyQR.find('td', {'class': 'txt', 'title': '당좌비율'})
+        except:
+            CR = 0
 
-    except:
-        QR = 0
+        if cCR != None:  # 유동비율을 찾으면
+            trCR = cCR.parent
+            tdCR = trCR.find_all('td')
 
-    if cQR != None:  # 당좌비율을 찾으면
-        trQR = cQR.parent
-        tdQR = trQR.find_all('td')
+            CR0 = []
+            CR0.append(tdCR[5].text)
 
-        QR0 = []
-        QR0.append(tdQR[5].text)
+            for i in range(len(CR0)):  # 값 ,제거
+                CR0[i] = CR0[i].replace(',', '')
 
-        for i in range(len(QR0)):  # 값 ,제거
-            QR0[i] = QR0[i].replace(',', '')
+            for i in range(len(CR0)):  # 공백 제거
+                if CR0[i] == '':
+                    CR0[i] = '0'
+                else:
+                    break
 
-        for i in range(len(QR0)):  # 공백 제거
-            if QR0[i] == '':
-                QR0[i] = '0'
-            else:
-                break
+            intCR = list(map(str, CR0))
+            CR = ''.join(intCR)
+            result4.put(CR)
 
-        intQR = list(map(str, QR0))
-        QR = ''.join(intQR)
+        # Quick Ratio 당좌비율 최근 분기
+        browser_fourth_p.find_element_by_xpath('//*[@id="val_tab3"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        time.sleep(0.1)
 
-    # Debt/Equity 부채비율 최근 분기
-    browser_fourth_p.find_element_by_xpath('//*[@id="val_tab3"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
-    browser_fourth_p.implicitly_wait(delay)
-    time.sleep(0.1)
+        htmlQRb = browser_fourth_p.page_source
+        htmlQRb1 = BeautifulSoup(htmlQRb, 'html.parser')
 
-    htmlDEb = browser_fourth_p.page_source
-    htmlDEb1 = BeautifulSoup(htmlDEb, 'html.parser')
+        htmlQR = htmlQRb1.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
+        tbodyQR = htmlQR.find('tbody')
 
-    htmlDE = htmlDEb1.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
-    tbodyDE = htmlDE.find('tbody')
+        try:  # 당좌비율 찾기
+            cQR = tbodyQR.find('td', {'class': 'txt', 'title': '당좌비율'})
 
-    try:  # 부채비율 찾기
-        cDE = tbodyDE.find('td', {'class': 'txt', 'title': '부채비율'})
+        except:
+            QR = 0
 
-    except:
-        DE = 0
+        if cQR != None:  # 당좌비율을 찾으면
+            trQR = cQR.parent
+            tdQR = trQR.find_all('td')
 
-    if cDE != None:  # 부채성향을 찾으면
-        trDE = cDE.parent
+            QR0 = []
+            QR0.append(tdQR[5].text)
+
+            for i in range(len(QR0)):  # 값 ,제거
+                QR0[i] = QR0[i].replace(',', '')
+
+            for i in range(len(QR0)):  # 공백 제거
+                if QR0[i] == '':
+                    QR0[i] = '0'
+                else:
+                    break
+
+            intQR = list(map(str, QR0))
+            QR = ''.join(intQR)
+
+            result4.put(QR)
+
+        # Debt/Equity 부채비율 최근 분기
+        browser_fourth_p.find_element_by_xpath('//*[@id="val_tab3"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
+        browser_fourth_p.implicitly_wait(delay)
+        time.sleep(0.1)
+
+        htmlDEb = browser_fourth_p.page_source
+        htmlDEb1 = BeautifulSoup(htmlDEb, 'html.parser')
+
+        htmlDE = htmlDEb1.find_all('table', {'class': 'gHead01 all-width data-list'})[0]
+        tbodyDE = htmlDE.find('tbody')
+
+        try:  # 부채비율 찾기
+            cDE = tbodyDE.find('td', {'class': 'txt', 'title': '부채비율'})
+
+        except:
+            DE = 0
+
+        if cDE != None:  # 부채성향을 찾으면
+            trDE = cDE.parent
+            tdDE = trDE.find_all('td')
+
+        trDE = tbodyDE.find_all('tr')[0]
         tdDE = trDE.find_all('td')
 
-    trDE = tbodyDE.find_all('tr')[0]
-    tdDE = trDE.find_all('td')
+        DE0 = []
+        DE0.append(tdDE[5].text)
 
-    DE0 = []
-    DE0.append(tdDE[5].text)
+        for i in range(len(DE0)):  # 값 ,제거
+            DE0[i] = DE0[i].replace(',', '')
 
-    for i in range(len(DE0)):  # 값 ,제거
-        DE0[i] = DE0[i].replace(',', '')
+        for i in range(len(DE0)):  # 공백 제거
+            if DE0[i] == '':
+                DE0[i] = '0'
+            else:
+                break
 
-    for i in range(len(DE0)):  # 공백 제거
-        if DE0[i] == '':
-            DE0[i] = '0'
-        else:
-            break
+        intDE = list(map(str, DE0))
+        DE = ''.join(intDE)
 
-    intDE = list(map(str, DE0))
-    DE = ''.join(intDE)
+        result4.put(DE)
+        print('제발')
 
+        return PC,OM,NPM,PR,CR,QR,DE
 
-    return PC,OM,NPM,PR,CR,QR,DE
+        browser_fourth_p.quit()
+    except:
+        browser_fourth_p.quit()
 
 # try:
 #     for code in ticker:
