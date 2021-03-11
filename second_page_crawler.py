@@ -1,19 +1,13 @@
 import re
-import traceback
+import time
 from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지, 더 간단히 얻을 수 있다는 장점이 있다고 한다.
 from selenium import webdriver
 
 delay = 5
 
 #네이버 금융 기업 개요
-def Enterprise_Overview(id,code,result2):
+def Enterprise_Overview(code,browser_second_p):
     try:
-        options = webdriver.ChromeOptions()
-        options.add_argument('headless')
-        options.add_argument('window-size=1920x1080')
-        options.add_argument('disable-gpu')
-
-        browser_second_p = webdriver.Chrome(options=options)
 
         name = code
         base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
@@ -38,34 +32,20 @@ def Enterprise_Overview(id,code,result2):
         tdIPO = re.findall("\d+", tdIPO)
         tdIPO = tdIPO[-3:]
         tdIPO = '/'.join(tdIPO)
-        IPODate = tdIPO
-        result2.put(IPODate)
+
+        IPODate =tdIPO
 
         return IPODate
+        browser_second_p.close()
+    except :
+        browser_second_p.close()
 
-        browser_second_p.quit()
-    except:
-        browser_second_p.quit()
 
-
-# try:
-#     for code in ticker:
-#         IPODate = Enterprise_Overview(code)
-#         print(code)
-#         print(IPODate)
-# except Exception as e:
-#     browser_second_p.quit()
-#     print(traceback.format_exc())
-#     print(e)
-
-# code = "000020"
-# try:
-#     IPODate = Enterprise_Overview(code)
-#     print(IPODate)
+# IPODate = []
+# for code in ticker:
+#     value = Enterprise_Overview(code)
+#     print(code,':',value)
+#     IPODate.append(value)
 #
-# except Exception as e:
-#     browser_second_p.quit()
-#     print(traceback.format_exc())
-#     print(e)
-#
-# browser_second_p.quit()
+# print(len(IPODate))
+

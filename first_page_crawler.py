@@ -5,18 +5,12 @@ from selenium import webdriver
 from multiprocessing import Process, Queue
 
 
+
 delay = 5
 
 #네이버 금융 기업현황
-def Enterprise_Status(id,code,result1):
+def Enterprise_Status(code,browser_first_p):
     try:
-        options = webdriver.ChromeOptions()
-        options.add_argument('headless')
-        options.add_argument('window-size=1920x1080')
-        options.add_argument('disable-gpu')
-
-        browser_first_p = webdriver.Chrome(options=options)
-
         name = code
         base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
 
@@ -72,8 +66,6 @@ def Enterprise_Status(id,code,result1):
             strDY = list(map(str,DY0))
             DY = ''.join(strDY)
 
-            result1.put(DY)
-
         # 거래소,산업군,섹터
         htmlEIS = html1.find('td',{'class':'cmp-table-cell td0101'})
 
@@ -83,14 +75,12 @@ def Enterprise_Status(id,code,result1):
 
         dtEI = str(dtEI)
         Exchange = dtEI[22:28] #거래소
-        result1.put(Exchange)
+
         Industry = dtEI[29:-5] #산업군
-        result1.put(Industry)
 
         dtS = str(dtS)
         dtS = dtS[29:-5]
         Sector =  dtS #섹터
-        result1.put(Sector)
 
         # 평균거래량,시가 총액,가격
         htmlAMP = html1.find('table',{'class':'gHead','summary':'기업의 기본적인 시세정보'
@@ -107,8 +97,6 @@ def Enterprise_Status(id,code,result1):
         tdM1 = ','.join(tdM1)
         MarketCap = tdM1.replace(',','')
 
-        result1.put(MarketCap)
-
         # 평균 거래량
         tbodyAV = htmlAMP.find('tbody')
         trAV = tbodyAV.find_all('tr')[3]
@@ -123,8 +111,6 @@ def Enterprise_Status(id,code,result1):
         tdAV2 = ','.join(tdAV2)
         AverageVolume = tdAV2
 
-        result1.put(AverageVolume)
-
         # 가격
         tbodyPR = htmlAMP.find('tbody')
         trPR = tbodyPR.find_all('tr')[0]
@@ -137,8 +123,6 @@ def Enterprise_Status(id,code,result1):
         tdPR1 = tdPR[58:-3]
         Price = tdPR1.replace(',','')
         Price = int(Price)
-
-        result1.put(Price)
 
         # 투자의견,목표 주가
         htmlART = html1.find('table',{'class':'gHead all-width','summary':'투자의견에 대한 '
@@ -154,7 +138,6 @@ def Enterprise_Status(id,code,result1):
             tdAR1 = '.'.join(tdAR1)
             AnalystRecom = tdAR1 #투자의견
 
-            result1.put(AnalystRecom)
         else:
             AnalystRecom = 0
 
@@ -169,7 +152,6 @@ def Enterprise_Status(id,code,result1):
             tdTP1 = '.'.join(tdTP1)
             TargetPrice = tdTP1  # 목표주가
 
-            result1.put(TargetPrice)
         else:
             TargetPrice = 0
 
@@ -217,7 +199,6 @@ def Enterprise_Status(id,code,result1):
                 EPSGrowthN = divEPSGN * 100
                 EPSGrowthN = round(EPSGrowthN, 2)
 
-                result1.put(EPSGrowthN)
             else:
                 EPSGrowthN = 0
 
@@ -265,7 +246,7 @@ def Enterprise_Status(id,code,result1):
                 divEPSGP5 = divEPSGP5 - 1
                 EPSGrowthP5 = divEPSGP5 * 100
                 EPSGrowthP5 = round(EPSGrowthP5, 2)
-                result1.put(EPSGrowthP5)
+
             else:
                 EPSGrowthP5 = 0
 
@@ -317,7 +298,7 @@ def Enterprise_Status(id,code,result1):
                 muEPSGN5 = mulEPSGN50.real
                 EPSGrowthN5 = muEPSGN5 * 100
                 EPSGrowthN5 = round(EPSGrowthN5, 2)
-                result1.put(EPSGrowthN5)
+
             else:
                 EPSGrowthN5 = 0
 
@@ -367,7 +348,7 @@ def Enterprise_Status(id,code,result1):
                 mulSGP50 = mulSGP5 - 1
                 SalesGrowthP5 = mulSGP50 * 100
                 SalesGrowthP5 = round(SalesGrowthP5, 2)
-                result1.put(SalesGrowthP5)
+
             else:
                 SalesGrowthP5 = 0
 
@@ -414,7 +395,7 @@ def Enterprise_Status(id,code,result1):
             if EPS != 0:
                 PE = Price / EPS
                 PE = round(PE, 2)
-                result1.put(PE)
+
             else:
                 PE = 0
 
@@ -461,7 +442,7 @@ def Enterprise_Status(id,code,result1):
             if SumFEPS != 0:
                 FPE = int(Price) / SumFEPS
                 FPE = round(FPE, 2)
-                result1.put(FPE)
+
             else:
                 FPE = 0
 
@@ -510,7 +491,7 @@ def Enterprise_Status(id,code,result1):
                 divEPSGT = divEPSGT - 1
                 EPSGrowthT = divEPSGT * 100
                 EPSGrowthT = round(EPSGrowthT, 2)
-                result1.put(EPSGrowthT)
+
             else:
                 EPSGrowthT = 0
 
@@ -518,7 +499,7 @@ def Enterprise_Status(id,code,result1):
         if EPSGrowthT != 0:
             PEG = PE / EPSGrowthT
             PEG = round(PEG, 2)
-            result1.put(PEG)
+
         else:
             PEG = 0
 
@@ -567,7 +548,7 @@ def Enterprise_Status(id,code,result1):
             if Sales != 0:
                 PS = int(MarketCap) / Sales
                 PS = round(PS, 2)
-                result1.put(PS)
+
             else:
                 PS = 0
 
@@ -611,7 +592,7 @@ def Enterprise_Status(id,code,result1):
             if BP != 0:
                 PB = Price / BP  # PBR
                 PB = round(PB, 2)
-                result1.put(PB)
+
             else:
                 BP = 0
                 PB = 0
@@ -660,7 +641,7 @@ def Enterprise_Status(id,code,result1):
             if FCF != 0:
                 PFC = Price / FCF
                 PFC = round(PFC, 2)
-                result1.put(PFC)
+
             else:
                 PFC = 0
 
@@ -704,7 +685,6 @@ def Enterprise_Status(id,code,result1):
             intROA = list(map(str, ROA0))
 
             ROA = ''.join(intROA)
-            result1.put(ROA)
 
         # ROE 자기자본이익률 최근 분기
         browser_first_p.find_elements_by_xpath('//*[@id="cns_Tab22"]')[0].click()
@@ -746,46 +726,14 @@ def Enterprise_Status(id,code,result1):
             intROE = list(map(str, ROE0))
 
             ROE = ''.join(intROE)
-            result1.put(ROE)
-
 
             return DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, \
                    TargetPrice, AverageVolume, Price, EPSGrowthN, EPSGrowthP5, \
                    EPSGrowthN5, SalesGrowthP5, PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, \
                    ROA, ROE
 
-        browser_first_p.quit()
+        browser_first_p.close()
     except Exception as e:
-        browser_first_p.quit()
+        browser_first_p.close()
+        print(e)
 
-
-
-
-# # try:
-# #     for code in ticker:
-# #         DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price,\
-# #         EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5,PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,\
-# #         ROA,ROE = Enterprise_Status(code)
-# #
-# #         # print(code,DY,Exchange,Industry,Sector,MarketCap,AnalystRecom,TargetPrice,AverageVolume,Price)
-# #         # print(EPSGrowthN,EPSGrowthP5,EPSGrowthN5,SalesGrowthP5)
-# #         # print(PE,FPE,EPSGrowthT,PEG,PS,PB,PFC,ROA,ROE)
-# # except Exception as e:
-# #     browser_first_p.quit()
-# #     print(traceback.format_exc())
-# #     print(e)
-#
-# code = "004170"
-# try:
-#     DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price, \
-#     EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5, PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, \
-#     ROA, ROE = Enterprise_Status(code)
-#
-#     print(code, DY, Exchange, Industry, Sector, MarketCap, AnalystRecom, TargetPrice, AverageVolume, Price)
-#     print(EPSGrowthN, EPSGrowthP5, EPSGrowthN5, SalesGrowthP5)
-#     print(PE, FPE, EPSGrowthT, PEG, PS, PB, PFC, ROA, ROE)
-#
-# except Exception as e:
-#     print(traceback.format_exc())
-#     print(e)
-#

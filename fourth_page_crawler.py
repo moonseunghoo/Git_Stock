@@ -1,61 +1,11 @@
 import time # 사이트를 불러올 때, 작업 지연시간을 지정해주기 위한 패키지이다. (사이트가 늦게 켜지면 에러가 발생하기 때문)
 import traceback
 from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지, 더 간단히 얻을 수 있다는 장점이 있다고 한다.
-from selenium import webdriver
-
 
 delay = 5
 
-def Price_a(code):
-    options = webdriver.ChromeOptions()
-    options.add_argument('headless')
-    options.add_argument('window-size=1920x1080')
-    options.add_argument('disable-gpu')
-
-    browser_price = webdriver.Chrome(options=options)
-
-    name = code
-    base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
-
-    browser_price.get(base_url)
-
-    # Price 가격
-    browser_price.switch_to.frame(browser_price.find_element_by_id('coinfo_cp'))
-    browser_price.implicitly_wait(delay)
-    browser_price.find_elements_by_xpath('//*[@id="header-menu"]/div[1]/dl/dt[1]')[0].click()
-    browser_price.implicitly_wait(delay)
-
-    htmlP = browser_price.page_source  # 지금 현 상태의 page source불러오기
-    htmlP1 = BeautifulSoup(htmlP, 'html.parser')
-
-    htmlAMP = htmlP1.find('table', {'class': 'gHead', 'summary': '기업의 기본적인 시세정보'
-                   '(주가/전일대비/수익률,52주최고/최저,액면가,거래량/거래대금,시가총액,유동주식비율,'
-                   '외국인지분율,52주베타,수익률(1M/3M/6M/1Y))를 제공합니다.'})
-
-    tbodyP = htmlAMP.find('tbody')
-    trP = tbodyP.find_all('tr')[0]
-    tdP = trP.find('td')
-
-    tdP = str(tdP)
-    tdP = tdP.split('/')
-    tdP[1:] = ''
-    tdP = str(tdP)
-    tdP1 = tdP[58:-3]
-    Price = tdP1.replace(',', '')
-    Price = int(Price)
-
-    return Price
-
-def Investment_Indicators(id,code,result4):
-    Price = Price_a(code)
+def Investment_Indicators(code,browser_fourth_p,Price):
     try:
-        options = webdriver.ChromeOptions()
-        options.add_argument('headless')
-        options.add_argument('window-size=1920x1080')
-        options.add_argument('disable-gpu')
-
-        browser_fourth_p = webdriver.Chrome(options=options)
-
         name = code
         base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
 
@@ -71,6 +21,7 @@ def Investment_Indicators(id,code,result4):
         html1 = BeautifulSoup(html0,'html.parser')
 
         #P/C 주가현금흐름비율 최근 4분기
+        global PC
         browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1_2"]').click()
         browser_fourth_p.implicitly_wait(delay)
         browser_fourth_p.find_element_by_xpath('//*[@id="hfinGubun2"]').click()
@@ -78,6 +29,8 @@ def Investment_Indicators(id,code,result4):
 
         htmlPCb = browser_fourth_p.page_source
         htmlPCb1 = BeautifulSoup(htmlPCb, 'html.parser')
+        browser_fourth_p.implicitly_wait(delay)
+        time.sleep(0.1)
 
         # htmlCPS = htmlPCb1.find('table', {'class': 'gHead01 all-width data-list',
         #                                   'summary': 'IFRS연결 분기 투자분석 정보를 제공합니다.'})
@@ -108,13 +61,14 @@ def Investment_Indicators(id,code,result4):
 
             intCPS = list(map(int, CPS0))
             CPS = sum(intCPS)  # CPS
-
-            PC = Price / CPS
-            PC = round(PC, 2)
-
-            result4.put(PC)
+            if CPS == 0:
+                PC = 0
+            else:
+                PC = Price / CPS
+                PC = round(PC, 2)
 
         # Operating Margin 영업이익율 최근 분기
+        global OM
         browser_fourth_p.find_element_by_xpath('//*[@id="val_tab1"]').click()
         browser_fourth_p.implicitly_wait(delay)
         browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
@@ -156,8 +110,6 @@ def Investment_Indicators(id,code,result4):
             strOM = list(map(str, OM0))
             OM = ''.join(strOM)
 
-            result4.put(OM)
-
         # Net Profit Margin 순이익율 최근 분기
         browser_fourth_p.find_element_by_xpath('//*[@id="val_tab1"]').click()
         browser_fourth_p.implicitly_wait(delay)
@@ -198,8 +150,6 @@ def Investment_Indicators(id,code,result4):
             strNPM = list(map(str, NPM0))
             NPM = ''.join(strNPM)
 
-            result4.put(NPM)
-
         # Payout Ratio 배당성향 최근 동기
         browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp0_2"]').click()
         browser_fourth_p.implicitly_wait(delay)
@@ -238,9 +188,8 @@ def Investment_Indicators(id,code,result4):
             strPR = list(map(str, PR0))
             PR = ''.join(strPR)
 
-            result4.put(PR)
-
         # Current Ratio 유동비율 최근 분기
+        global CR
         browser_fourth_p.find_element_by_xpath('//*[@id="val_tab3"]').click()
         browser_fourth_p.implicitly_wait(delay)
         browser_fourth_p.find_element_by_xpath('//*[@id="frqTyp1"]').click()
@@ -280,7 +229,6 @@ def Investment_Indicators(id,code,result4):
 
             intCR = list(map(str, CR0))
             CR = ''.join(intCR)
-            result4.put(CR)
 
         # Quick Ratio 당좌비율 최근 분기
         browser_fourth_p.find_element_by_xpath('//*[@id="val_tab3"]').click()
@@ -321,8 +269,6 @@ def Investment_Indicators(id,code,result4):
 
             intQR = list(map(str, QR0))
             QR = ''.join(intQR)
-
-            result4.put(QR)
 
         # Debt/Equity 부채비율 최근 분기
         browser_fourth_p.find_element_by_xpath('//*[@id="val_tab3"]').click()
@@ -367,42 +313,10 @@ def Investment_Indicators(id,code,result4):
         intDE = list(map(str, DE0))
         DE = ''.join(intDE)
 
-        result4.put(DE)
-        print('제발')
-
         return PC,OM,NPM,PR,CR,QR,DE
 
-        browser_fourth_p.quit()
-    except:
-        browser_fourth_p.quit()
-
-# try:
-#     for code in ticker:
-#         Price = Price_a(code)
-#         PC,OM,NPM,PR,CR,QR,DE = Investment_Indicators(code)
-#         print(code)
-#         print(PC,OM,NPM,PR,CR,QR,DE)
-#
-# except Exception as e:
-#     browser_fourth_p.quit()
-#     print(traceback.format_exc())
-#     print(e)
-#
-# browser_fourth_p.quit()
-# print(time.time()-start)
-
-# code = '047810'
-#
-# try:
-#     Price = Price_a(code)
-#     PC,OM,NPM,PR,CR,QR,DE = Investment_Indicators(code)
-#     print(code)
-#     print(PC,OM,NPM,PR,CR,QR,DE)
-#
-# except Exception as e:
-#     browser_fourth_p.quit()
-#     print(traceback.format_exc())
-#     print(e)
-#
-# browser_fourth_p.quit()
-# print(time.time()-start)
+        browser_fourth_p.close()
+    except Exception as e:
+        print(traceback.format_exc())
+        browser_fourth_p.close()
+        print(e)

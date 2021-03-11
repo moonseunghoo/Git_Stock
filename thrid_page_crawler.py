@@ -1,19 +1,13 @@
 import time # 사이트를 불러올 때, 작업 지연시간을 지정해주기 위한 패키지이다. (사이트가 늦게 켜지면 에러가 발생하기 때문)
 import traceback
 from bs4 import BeautifulSoup # 웹 페이지 소스를 얻기 위한 패키지, 더 간단히 얻을 수 있다는 장점이 있다고 한다.
-from selenium import webdriver
 
 delay = 5
 
-def Financial_Analysis(id,code,result3):
+# ticker,ticker_name = All_stock()
+# result3 = 0
+def Financial_Analysis(code,browser_thrid_p):
     try:
-        options = webdriver.ChromeOptions()
-        options.add_argument('headless')
-        options.add_argument('window-size=1920x1080')
-        options.add_argument('disable-gpu')
-
-        browser_thrid_p = webdriver.Chrome(options=options)
-
         name = code
         global GM
         base_url = "https://finance.naver.com/item/coinfo.nhn?code=" + name + "&target=finsum_more"
@@ -30,11 +24,14 @@ def Financial_Analysis(id,code,result3):
         browser_thrid_p.implicitly_wait(delay)
         browser_thrid_p.find_element_by_xpath('//*[@id="hfinGubun"]').click()
         browser_thrid_p.implicitly_wait(delay)
-        time.sleep(0.25)
+        time.sleep(0.5)
 
         htmlFA = browser_thrid_p.page_source
+        browser_thrid_p.implicitly_wait(delay)
         htmlFA0 = BeautifulSoup(htmlFA, 'html.parser')
+        browser_thrid_p.implicitly_wait(delay)
         htmlGM = htmlFA0.find('table', {'class': 'gHead01 all-width data-list'})
+        browser_thrid_p.implicitly_wait(delay)
 
         tbodyGM = htmlGM.find('tbody')
 
@@ -64,38 +61,8 @@ def Financial_Analysis(id,code,result3):
             GM = sum(strGM)
             GM = round(GM, 2)
 
-            result3.put(GM)
-
         return GM
-        browser_third_p.quit()
-    except:
-        browser_third_p.quit()
-
-
-# try:
-#     for code in ticker:
-#         GM = Financial_Analysis(code)
-#         print(code)
-#         print(GM)
-#
-# except Exception as e:
-#     browser_thrid_p.quit()
-#     print(traceback.format_exc())
-#     print(e)
-#
-# browser_thrid_p.quit()
-#
-# print(time.time()-start)
-
-# code = "008060"
-# try:
-#     GM = Financial_Analysis(code)
-#     print(code)
-#     print(GM)
-# except Exception as e:
-#     browser_thrid_p.quit()
-#     print(traceback.format_exc())
-#     print(e)
-# browser_thrid_p.quit()
-#
-# print(time.time()-start)
+        browser_third_p.close()
+    except Exception as e :
+        browser_third_p.close()
+        print(e)
